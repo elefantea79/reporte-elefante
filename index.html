@@ -23,7 +23,7 @@
         .chart-container { height: 260px; position: relative; }
         .table-container { background: white; border-radius: 12px; padding: 15px; overflow-x: auto; border: 1px solid var(--border); }
         table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-        th { background: #f1f5f9; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); position: sticky; top: 0; white-space: nowrap; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); position: sticky; top: 0; }
         td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
         .status-pill { padding: 4px 8px; border-radius: 5px; font-weight: 600; font-size: 0.7rem; display: inline-block; }
         .bg-proceso { background: #fef08a; color: #854d0e; }
@@ -63,16 +63,7 @@
     <div class="table-container card">
         <table id="mainTable">
             <thead>
-                <tr>
-                    <th>COTI</th>
-                    <th>FECHA REF.</th>
-                    <th>DETALLE</th>
-                    <th>MODELO</th>
-                    <th>SERIE</th>
-                    <th>ESTADO TÉCNICO</th>
-                    <th>ADMIN.</th>
-                    <th>PRECIO</th>
-                </tr>
+                <tr><th>COTI</th><th>FECHA REF.</th><th>DETALLE</th><th>ESTADO TÉCNICO</th><th>ADMIN.</th><th>PRECIO</th></tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -109,8 +100,6 @@
                             fecha: dObj,
                             fechaStr: fechaRaw || 'S/F',
                             detalle: col["DETALLE"] || "Sin Detalle",
-                            modelo: col["MODELO"] || col["Modelo"] || "-", // Nueva columna Modelo
-                            serie: col["SERIE"] || col["Serie"] || "-", // Nueva columna Serie
                             tec: tec,
                             adm: adm,
                             precio: parseCurrency(col["PRECIO SERVIC."] || col["PRECIO"]),
@@ -155,9 +144,11 @@
             // 2. Datos filtrados por Tiempo + Estado (para Tabla y Gráficos)
             const finalFiltered = timeFiltered.filter(r => selS === 'ALL' || r.tec === selS);
 
-            // KPIs
+            // KPIs (Usan timeFiltered para totales generales y finalFiltered para el Status)
             const totalMonto = timeFiltered.reduce((acc, r) => acc + r.precio, 0);
             const totalOC = timeFiltered.filter(r => r.tieneOC).reduce((acc, r) => acc + r.precio, 0);
+            
+            // AHORA LEE LA CANTIDAD DE LOS FILTROS APLICADOS DIRECTAMENTE
             const totalStatus = finalFiltered.length;
 
             document.getElementById('kpi-total').innerText = timeFiltered.length;
@@ -174,14 +165,10 @@
                 if (!enFiltroActual && !(esAnulado && selS === 'ALL' && (selY === 'ALL' || r.fecha?.getFullYear().toString() === selY))) return;
 
                 let pillClass = r.tec.toUpperCase() === 'TERMINADO' ? 'bg-terminado' : (r.tec === '' ? 'bg-vacio' : 'bg-proceso');
-                
-                // Aquí se insertan las nuevas columnas modelo y serie
                 html += `<tr class="${esAnulado ? 'row-anulado' : ''}">
                     <td><strong>${r.coti}</strong></td>
                     <td>${r.fechaStr}</td>
                     <td>${r.detalle.substring(0, 50)}${r.detalle.length > 50 ? '...' : ''}</td>
-                    <td>${r.modelo}</td>
-                    <td>${r.serie}</td>
                     <td><span class="status-pill ${pillClass}">${r.tec || 'Sin Estado'}</span></td>
                     <td>${r.adm}</td>
                     <td>$ ${r.precio.toLocaleString('es-PE', {minimumFractionDigits:2})}</td>
