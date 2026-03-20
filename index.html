@@ -3,73 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elefante S.A.C. - Dashboard Profesional</title>
+    <title>Elefante S.A.C. - Sistema de Reportes</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
         :root { --primary: #1e40af; --secondary: #10b981; --warning: #f59e0b; --bg: #f1f5f9; --text: #0f172a; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
         
-        /* Layout */
-        .header { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .filters { display: flex; gap: 10px; }
-        select { padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.85rem; outline: none; }
+        .no-export { display: flex; gap: 10px; } /* Clase para ocultar elementos en PDF */
         
-        /* KPIs */
+        .header { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .btn-pdf { background: #dc2626; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; }
+        .btn-pdf:hover { background: #b91c1c; }
+
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
         .kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--primary); margin-top: 5px; }
         .kpi-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 600; }
 
-        /* Tabla Acordeón */
+        .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .chart-box { background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; height: 280px; }
+
         .table-container { background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { background: #f8fafc; padding: 12px 15px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th { background: #f8fafc; padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0; }
         
-        /* Estilo de Grupos (Meses) */
-        .month-group-header { background: #f1f5f9; cursor: pointer; transition: background 0.2s; font-weight: 700; border-bottom: 1px solid #cbd5e1; }
-        .month-group-header:hover { background: #e2e8f0; }
-        .month-group-header td { padding: 12px 15px; color: var(--primary); }
-        .toggle-icon { display: inline-block; width: 20px; transition: transform 0.2s; }
-        .collapsed .toggle-icon { transform: rotate(-90deg); }
+        .month-group-header { background: #f1f5f9; cursor: pointer; font-weight: 700; border-bottom: 1px solid #cbd5e1; }
+        .month-group-header td { padding: 10px 15px; color: var(--primary); }
         
-        /* Filas de Datos */
-        .data-row td { padding: 10px 15px; border-bottom: 1px solid #f1f5f9; }
+        .data-row td { padding: 8px 15px; border-bottom: 1px solid #f1f5f9; }
         .hidden-row { display: none; }
         
-        /* Gráficos */
-        .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .chart-box { background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; height: 300px; }
-
-        .status-pill { padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 0.7rem; }
+        .status-pill { padding: 3px 6px; border-radius: 4px; font-weight: 600; font-size: 0.65rem; }
         .bg-enviado { background: #dbeafe; color: #1e40af; }
         .bg-pendiente { background: #fef3c7; color: #92400e; }
+        .bg-norequiere { background: #f1f5f9; color: #475569; }
+
+        /* Estilos específicos para impresión/PDF */
+        @media print {
+            .no-export { display: none !important; }
+            body { padding: 0; background: white; }
+            .card, .table-container { box-shadow: none; border: 1px solid #eee; }
+        }
     </style>
 </head>
-<body>
+<body id="report-content">
 
     <div class="header">
         <div>
             <h1 style="margin:0; font-size: 1.3rem;">Mando Central Elefante S.A.C.</h1>
-            <p id="update-info" style="margin:5px 0 0; color:#64748b; font-size:0.75rem;">Sincronizando con base de datos...</p>
+            <p id="update-info" style="margin:5px 0 0; color:#64748b; font-size:0.75rem;">Sincronizando datos...</p>
         </div>
-        <div class="filters">
+        <div class="no-export">
             <select id="fYear" onchange="processData()"></select>
             <select id="fResp" onchange="processData()"><option value="ALL">Todos los Responsables</option></select>
+            <button class="btn-pdf" onclick="exportToPDF()">
+                <span>📄</span> Exportar PDF
+            </button>
         </div>
     </div>
 
     <div class="kpi-grid">
         <div class="card">
-            <div class="kpi-label">Monto Global</div>
+            <div class="kpi-label">Monto Global Facturable</div>
             <div class="kpi-value" id="kpi-total">$ 0.00</div>
         </div>
         <div class="card">
-            <div class="kpi-label">Gestión Administrativa (Por Cobrar)</div>
+            <div class="kpi-label">Gestión Pendiente (Por Cobrar)</div>
             <div class="kpi-value" id="kpi-pendiente" style="color: var(--warning);">$ 0.00</div>
         </div>
         <div class="card">
-            <div class="kpi-label">Servicios Realizados</div>
+            <div class="kpi-label">Servicios Totales</div>
             <div class="kpi-value" id="kpi-count">0</div>
         </div>
     </div>
@@ -85,11 +92,11 @@
                 <tr>
                     <th>MES / DETALLE</th>
                     <th>MODELO</th>
-                    <th>RESPONSABLE</th>
+                    <th>ADMIN.</th>
                     <th>ESTADO TÉC.</th>
                     <th>ESTADO ADMIN.</th>
                     <th># OC VOLVO</th>
-                    <th>PRECIO</th>
+                    <th style="text-align:right">PRECIO</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -132,8 +139,6 @@
 
         function toggleGroup(monthKey) {
             const rows = document.querySelectorAll(`.group-${monthKey}`);
-            const header = document.getElementById(`header-${monthKey}`);
-            header.classList.toggle('collapsed');
             rows.forEach(r => r.classList.toggle('hidden-row'));
         }
 
@@ -145,7 +150,7 @@
 
             let totalG = 0, pendG = 0, countG = 0;
             const grouped = {}, modelStats = {}, monthPerf = {};
-            const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            const mesesNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
             rawData.forEach(r => {
                 const fRef = r["FECHA COTIZACION"] || r["FECHA INICIO"] || "";
@@ -159,53 +164,45 @@
                 const precio = parseCurrency(r["PRECIO SERVIC."]);
                 const estAdm = (r["ESTADO ADMIN."] || "PENDIENTE").toUpperCase();
 
-                // Totales Globales
                 totalG += precio;
                 countG++;
                 if (r["ESTADO TÉCNICO"] === "Terminado" && estAdm !== "FACTURADO") pendG += precio;
 
-                // Agrupamiento
-                if (!grouped[monthKey]) grouped[monthKey] = { label: `${meses[m-1]} ${y}`, total: 0, services: [] };
+                if (!grouped[monthKey]) grouped[monthKey] = { label: `${mesesNames[m-1]} ${y}`, total: 0, items: [] };
                 grouped[monthKey].total += precio;
-                grouped[monthKey].services.push(r);
+                grouped[monthKey].items.push(r);
 
-                // Stats para Gráficos
-                const mod = r["MODELO"] || "Otros";
-                modelStats[mod] = (modelStats[mod] || 0) + 1;
+                modelStats[r["MODELO"] || "Otros"] = (modelStats[r["MODELO"] || "Otros"] || 0) + 1;
                 
                 if (!monthPerf[monthKey]) monthPerf[monthKey] = { sum: 0, day: 0 };
                 monthPerf[monthKey].sum += precio;
                 if (parseInt(d) > monthPerf[monthKey].day) monthPerf[monthKey].day = parseInt(d);
             });
 
-            // Renderizar Tabla Agrupada
             Object.keys(grouped).sort().reverse().forEach(key => {
-                const group = grouped[key];
-                const header = `<tr class="month-group-header" id="header-${key}" onclick="toggleGroup('${key}')">
-                    <td colspan="6"><span class="toggle-icon">▼</span> ${group.label} (${group.services.length} servicios)</td>
-                    <td style="text-align:right">$ ${group.total.toLocaleString()}</td>
-                </tr>`;
-                container.insertAdjacentHTML('beforeend', header);
+                const g = grouped[key];
+                container.insertAdjacentHTML('beforeend', `<tr class="month-group-header" onclick="toggleGroup('${key}')">
+                    <td colspan="6">📁 ${g.label} (${g.items.length} servicios)</td>
+                    <td style="text-align:right">$ ${g.total.toLocaleString()}</td>
+                </tr>`);
 
-                group.services.forEach(s => {
-                    const row = `<tr class="data-row group-${key} hidden-row">
-                        <td style="padding-left: 30px; font-size: 0.75rem;">${s["# COTI"]} - ${s["DETALLE"].substring(0,35)}</td>
+                g.items.forEach(s => {
+                    container.insertAdjacentHTML('beforeend', `<tr class="data-row group-${key} hidden-row">
+                        <td style="padding-left:25px; color:#64748b">${s["# COTI"]} - ${s["DETALLE"].substring(0,40)}</td>
                         <td>${s["MODELO"]}</td>
-                        <td>${s["RESPONSABLE"]}</td>
+                        <td>${s["RESPONS. ADMIN"] || '-'}</td>
                         <td>${s["ESTADO TÉCNICO"]}</td>
                         <td><span class="status-pill bg-${s["ESTADO ADMIN."].toLowerCase().replace(' ', '')}">${s["ESTADO ADMIN."]}</span></td>
                         <td>${s["# OC VOLVO"] || '-'}</td>
                         <td style="text-align:right">$ ${parseCurrency(s["PRECIO SERVIC."]).toLocaleString()}</td>
-                    </tr>`;
-                    container.insertAdjacentHTML('beforeend', row);
+                    </tr>`);
                 });
             });
 
-            // Actualizar Interfaz
             document.getElementById('kpi-total').innerText = `$ ${totalG.toLocaleString()}`;
             document.getElementById('kpi-pendiente').innerText = `$ ${pendG.toLocaleString()}`;
             document.getElementById('kpi-count').innerText = countG;
-            document.getElementById('update-info').innerText = `Actualizado: ${new Date().toLocaleTimeString()} | Filtro: ${selResp}`;
+            document.getElementById('update-info').innerText = `Reporte al: ${new Date().toLocaleDateString()} | Filtro: ${selResp}`;
 
             renderCharts(modelStats, monthPerf);
         }
@@ -213,35 +210,47 @@
         function renderCharts(models, perf) {
             if (charts.evol) charts.evol.destroy();
             const sortedKeys = Object.keys(perf).sort();
-            const dataEvol = sortedKeys.map(k => perf[k].sum);
-            const dataYield = sortedKeys.map(k => (perf[k].sum / perf[k].day).toFixed(2));
-
             charts.evol = new Chart(document.getElementById('chartEvolucion'), {
-                type: 'line',
+                type: 'bar',
                 data: {
                     labels: sortedKeys,
-                    datasets: [
-                        { label: 'Facturación ($)', data: dataEvol, borderColor: '#1e40af', backgroundColor: 'rgba(30, 64, 175, 0.1)', fill: true, tension: 0.3 },
-                        { label: 'Rendimiento Diario', data: dataYield, borderColor: '#f59e0b', borderDash: [5, 5], tension: 0.3 }
-                    ]
+                    datasets: [{ label: 'Ingresos ($)', data: sortedKeys.map(k => perf[k].sum), backgroundColor: '#1e40af' }]
                 },
-                options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'Tendencia de Ingresos vs Eficiencia' } } }
+                options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'Facturación Mensual' } } }
             });
 
             if (charts.models) charts.models.destroy();
-            const sortedModels = Object.entries(models).sort((a,b) => b[1]-a[1]).slice(0, 10);
+            const topM = Object.entries(models).sort((a,b) => b[1]-a[1]).slice(0, 8);
             charts.models = new Chart(document.getElementById('chartModelos'), {
-                type: 'bar',
+                type: 'doughnut',
                 data: {
-                    labels: sortedModels.map(m => m[0]),
-                    datasets: [{ label: 'Maquinaria Volvo', data: sortedModels.map(m => m[1]), backgroundColor: '#10b981' }]
+                    labels: topM.map(m => m[0]),
+                    datasets: [{ data: topM.map(m => m[1]), backgroundColor: ['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6'] }]
                 },
-                options: { maintainAspectRatio: false, indexAxis: 'y' }
+                options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'Distribución por Maquinaria' } } }
+            });
+        }
+
+        function exportToPDF() {
+            const element = document.getElementById('report-content');
+            const opt = {
+                margin: 0.5,
+                filename: `Reporte_Elefante_SAC_${new Date().toLocaleDateString()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+
+            // Antes de exportar, expandimos todas las filas para que salgan en el PDF
+            document.querySelectorAll('.data-row').forEach(r => r.classList.remove('hidden-row'));
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Después de exportar, volvemos a ocultar para mantener el diseño limpio en web
+                document.querySelectorAll('.data-row').forEach(r => r.classList.add('hidden-row'));
             });
         }
 
         init();
-        setInterval(init, 300000);
     </script>
 </body>
 </html>
