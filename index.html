@@ -3,81 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Operativo - Elefante S.A.C.</title>
+    <title>Dashboard Gerencial - Elefante S.A.C.</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
-        :root { --primary: #1e40af; --bg: #f8fafc; --text: #1e293b; --border: #cbd5e1; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 20px; }
-        .header-container { display: flex; justify-content: space-between; align-items: flex-start; background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
-        .header-left h2 { margin: 0; color: var(--primary); font-size: 1.5rem; }
-        .header-left p { margin: 5px 0 0; font-size: 0.8rem; color: #64748b; }
-        .filters-area { display: flex; gap: 10px; margin-top: 10px; }
-        select { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem; background: #fff; cursor: pointer; }
-        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        .kpi-card { text-align: center; }
-        .kpi-card h3 { font-size: 0.75rem; color: #64748b; text-transform: uppercase; margin: 0; }
-        .kpi-card p { font-size: 1.7rem; font-weight: 800; margin: 8px 0 0; color: var(--primary); }
-        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 20px; }
-        .chart-container { height: 280px; position: relative; }
-        .evolution-container { height: 320px; position: relative; width: 100%; }
-        .table-container { background: white; border-radius: 12px; padding: 15px; overflow-x: auto; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-        th { background: #f1f5f9; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); position: sticky; top: 0; }
-        td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
-        .status-pill { padding: 4px 8px; border-radius: 5px; font-weight: 600; font-size: 0.7rem; display: inline-block; }
-        .bg-proceso { background: #fef08a; color: #854d0e; }
-        .bg-terminado { background: #bbf7d0; color: #166534; }
-        .bg-vacio { background: #e2e8f0; color: #475569; }
-        .row-anulado { background-color: #fff1f2; text-decoration: line-through; color: #94a3b8; }
+        :root { --primary: #1e40af; --secondary: #10b981; --warning: #f59e0b; --danger: #ef4444; --bg: #f1f5f9; --text: #0f172a; }
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .header { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .kpi-card h3 { font-size: 0.75rem; color: #64748b; text-transform: uppercase; margin: 0; letter-spacing: 0.05em; }
+        .kpi-card .value { font-size: 1.8rem; font-weight: 800; margin-top: 5px; color: var(--primary); }
+        .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .charts-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .chart-container { height: 300px; position: relative; }
+        .table-container { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { background: #f8fafc; padding: 12px 15px; text-align: left; border-bottom: 2px solid #e2e8f0; font-weight: 600; }
+        td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; }
+        .status-pill { padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 0.7rem; }
+        .bg-enviado { background: #dbeafe; color: #1e40af; }
+        .bg-pendiente { background: #fef3c7; color: #92400e; }
+        .bg-facturado { background: #dcfce7; color: #166534; }
+        .bg-norequiere { background: #f1f5f9; color: #475569; }
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <div class="header-left">
-            <h2>Reporte Operativo Elefante S.A.C.</h2>
-            <p id="last-update">Sincronizando...</p>
+    <div class="header">
+        <div>
+            <h1 style="margin:0; font-size: 1.4rem;">Control de Servicios Elefante S.A.C.</h1>
+            <p id="update-time" style="margin:5px 0 0; color: #64748b; font-size: 0.8rem;">Cargando datos...</p>
         </div>
-        <div class="header-right">
-            <div class="filters-area">
-                <select id="fYear" onchange="renderDashboard()"><option value="ALL">Año: Todos</option></select>
-                <select id="fMonth" onchange="renderDashboard()"><option value="ALL">Mes: Todos</option></select>
-                <select id="fStatus" onchange="renderDashboard()"><option value="ALL">Estado: Todos</option></select>
-            </div>
+        <div>
+            <select id="fYear" onchange="processData()" style="padding:8px; border-radius:6px; border:1px solid #cbd5e1;"></select>
         </div>
     </div>
 
-    <div class="kpi-row">
-        <div class="card kpi-card"><h3>Cotizaciones Válidas</h3><p id="kpi-total">0</p></div>
-        <div class="card kpi-card"><h3>Monto Acumulado</h3><p id="kpi-monto">$ 0,00</p></div>
-        <div class="card kpi-card"><h3>Orden de Compra</h3><p id="kpi-oc" style="color: #10b981;">$ 0,00</p></div>
-        <div class="card kpi-card"><h3>Servicios en Curso</h3><p id="kpi-activos">0</p></div>
+    <div class="kpi-grid">
+        <div class="card kpi-card"><h3>Cotizaciones Válidas</h3><div class="value" id="kpi-total">0</div></div>
+        <div class="card kpi-card"><h3>Monto Acumulado ($)</h3><div class="value" id="kpi-monto">0.00</div></div>
+        <div class="card kpi-card"><h3>OC Volvo Confirmadas</h3><div class="value" id="kpi-oc" style="color: var(--secondary);">0.00</div></div>
+        <div class="card kpi-card"><h3>Por Cobrar / En Gestión</h3><div class="value" id="kpi-pendiente" style="color: var(--warning);">0.00</div></div>
     </div>
 
-    <div class="card" style="margin-bottom: 20px;">
-        <h3>Evolución de Servicios y Crecimiento (Rendimiento Diario Real)</h3>
-        <div class="evolution-container"><canvas id="chartEvolucion"></canvas></div>
+    <div class="charts-row">
+        <div class="card">
+            <h3>Evolución y Rendimiento Diario</h3>
+            <div class="chart-container"><canvas id="chartEvolucion"></canvas></div>
+        </div>
+        <div class="card">
+            <h3>Estatus Administrativo ($)</h3>
+            <div class="chart-container"><canvas id="chartAdmin"></canvas></div>
+        </div>
     </div>
 
-    <div class="charts-grid">
-        <div class="card"><h3>Distribución de Estados</h3><div class="chart-container"><canvas id="chartDona"></canvas></div></div>
-        <div class="card"><h3>Top 5 Servicios</h3><div class="chart-container"><canvas id="chartBarra"></canvas></div></div>
+    <div class="charts-bottom">
+        <div class="card">
+            <h3>Modelos de Máquinas más Recurrentes</h3>
+            <div class="chart-container"><canvas id="chartModelos"></canvas></div>
+        </div>
+        <div class="card">
+            <h3>Principales Servicios Solicitados</h3>
+            <div class="chart-container"><canvas id="chartServicios"></canvas></div>
+        </div>
     </div>
 
-    <div class="table-container card">
-        <table id="mainTable">
+    <div class="table-container">
+        <table id="dataTable">
             <thead>
                 <tr>
                     <th>COTI</th>
-                    <th>FECHA REF.</th>
+                    <th>FECHA REF</th>
                     <th>MODELO</th>
-                    <th>SERIE</th>
-                    <th>DETALLE</th>
-                    <th>ESTADO TÉCNICO</th>
-                    <th>% AVANCE</th>
-                    <th>ADMIN.</th>
+                    <th>SERVICIO</th>
+                    <th>ESTADO TÉC.</th>
+                    <th>ESTADO ADMIN.</th>
+                    <th># OC VOLVO</th>
                     <th>PRECIO</th>
                 </tr>
             </thead>
@@ -87,190 +89,159 @@
 
     <script>
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSO6RWELO8boOz-hzOH0Pb3mYZH3r3I8fWy9DxErOz5W3SWS2AilvndMW6b894hCIvBJyUX4htGMato/pub?gid=816705007&single=true&output=csv';
-        let fullData = [];
-        let chartDona, chartBarra, chartEvolucion;
+        let rawData = [];
+        let charts = {};
 
-        function parseCurrency(val) {
-            if (!val) return 0;
-            let clean = val.replace(/[$\s]/g, '').replace(/\./g, '').replace(',', '.');
-            return parseFloat(clean) || 0;
+        function parseCurrency(v) {
+            if (!v) return 0;
+            return parseFloat(v.replace(/[$\s]/g, '').replace(/\./g, '').replace(',', '.')) || 0;
         }
 
-        function fetchData() {
+        async function init() {
             Papa.parse(`${sheetUrl}&ts=${Date.now()}`, {
                 download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
-                    fullData = results.data.map(col => {
-                        const tec = (col["ESTADO TÉCNICO"] || "").trim();
-                        const adm = (col["ESTADO ADMIN."] || "").trim();
-                        const fechaRaw = (col["FECHA COTIZACION"] || col["FECHA INICIO"] || "").trim();
-                        let dObj = null;
-                        if (fechaRaw) {
-                            const p = fechaRaw.split(/[-/]/);
-                            dObj = p[0].length === 4 ? new Date(p[0], p[1]-1, p[2]) : new Date(p[2], p[1]-1, p[0]);
-                        }
-                        return {
-                            coti: col["# COTI"] || col["COTI"] || "-",
-                            fecha: dObj,
-                            fechaStr: fechaRaw || 'S/F',
-                            modelo: col["MODELO"] || "-",
-                            serie: col["SERIE"] || "-",
-                            detalle: col["DETALLE"] || "Sin Detalle",
-                            tec: tec,
-                            avance: col["% AVANCE"] || "0%",
-                            adm: adm,
-                            precio: parseCurrency(col["PRECIO SERVIC."] || col["PRECIO"]),
-                            tieneOC: (col["# OC VOLVO"] || "").trim() !== ""
-                        };
-                    });
-                    updateFilterOptions();
-                    renderDashboard();
-                    document.getElementById('last-update').innerText = `Actualizado: ${new Date().toLocaleTimeString()}`;
+                    rawData = results.data;
+                    populateYears();
+                    processData();
                 }
             });
         }
 
-        function updateFilterOptions() {
-            const ySel = document.getElementById('fYear');
-            if (ySel.options.length > 1) return;
-            const years = [...new Set(fullData.map(r => r.fecha?.getFullYear()).filter(y => y))].sort();
-            const statuses = [...new Set(fullData.map(r => r.tec).filter(s => s && !s.toUpperCase().includes('ANULADO')))].sort();
-            years.forEach(y => ySel.add(new Option(`Año: ${y}`, y)));
-            const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-            meses.forEach((m, i) => document.getElementById('fMonth').add(new Option(m, i + 1)));
-            statuses.forEach(s => document.getElementById('fStatus').add(new Option(s, s)));
+        function populateYears() {
+            const years = [...new Set(rawData.map(r => {
+                const f = r["FECHA COTIZACION"] || r["FECHA INICIO"];
+                return f ? f.split('/').pop() : null;
+            }).filter(y => y))].sort();
+            const select = document.getElementById('fYear');
+            select.innerHTML = '<option value="ALL">Todos los años</option>';
+            years.forEach(y => select.add(new Option(y, y)));
+            select.value = "2026";
         }
 
-        function renderDashboard() {
-            const selY = document.getElementById('fYear').value;
-            const selM = document.getElementById('fMonth').value;
-            const selS = document.getElementById('fStatus').value;
+        function processData() {
+            const selectedYear = document.getElementById('fYear').value;
+            const tableBody = document.querySelector('#dataTable tbody');
+            tableBody.innerHTML = '';
 
-            // Filtro para KPIs
-            const finalFiltered = fullData.filter(r => {
-                const esAnulado = r.tec.toUpperCase().includes('ANULADO') || r.adm.toUpperCase().includes('ANULADO');
-                if (esAnulado) return false;
-                const matchY = selY === 'ALL' || r.fecha?.getFullYear().toString() === selY;
-                const matchM = selM === 'ALL' || (r.fecha?.getMonth() + 1).toString() === selM;
-                const matchS = selS === 'ALL' || r.tec === selS;
-                return matchY && matchM && matchS;
-            });
+            let kpiMonto = 0, kpiOC = 0, kpiPendiente = 0, validCount = 0;
+            const adminStats = {}, modelStats = {}, serviceStats = {}, evolution = {};
 
-            document.getElementById('kpi-total').innerText = finalFiltered.length;
-            document.getElementById('kpi-monto').innerText = `$ ${finalFiltered.reduce((acc, r) => acc + r.precio, 0).toLocaleString('es-PE', {minimumFractionDigits:2})}`;
-            document.getElementById('kpi-oc').innerText = `$ ${finalFiltered.filter(r => r.tieneOC).reduce((acc, r) => acc + r.precio, 0).toLocaleString('es-PE', {minimumFractionDigits:2})}`;
-            document.getElementById('kpi-activos').innerText = finalFiltered.length;
+            rawData.forEach(r => {
+                const estTec = (r["ESTADO TÉCNICO"] || "").trim();
+                const estAdm = (r["ESTADO ADMIN."] || "PENDIENTE").trim().toUpperCase();
+                const fRef = r["FECHA COTIZACION"] || r["FECHA INICIO"] || "";
+                const precio = parseCurrency(r["PRECIO SERVIC."]);
+                const modelo = r["MODELO"] || "N/A";
+                const detalle = r["DETALLE"] || "Sin detalle";
+                
+                if (estTec.includes("Anulado") || !fRef) return;
+                const year = fRef.split('/').pop();
+                if (selectedYear !== 'ALL' && year !== selectedYear) return;
 
-            // Filtro para Gráfico Evolución (Ignora Mes seleccionado para mostrar la curva del año)
-            const evolutionData = fullData.filter(r => {
-                const esAnulado = r.tec.toUpperCase().includes('ANULADO');
-                return !esAnulado && (selY === 'ALL' || r.fecha?.getFullYear().toString() === selY) && (selS === 'ALL' || r.tec === selS);
-            });
+                // Cálculos Financieros
+                validCount++;
+                kpiMonto += precio;
+                if (r["# OC VOLVO"] && r["# OC VOLVO"] !== "PENDIENTE") kpiOC += precio;
+                
+                // Lógica de Pendiente de Cobro: Terminados pero no Facturados
+                if (estTec === "Terminado" && estAdm !== "FACTURADO") {
+                    kpiPendiente += precio;
+                    adminStats[estAdm] = (adminStats[estAdm] || 0) + precio;
+                }
 
-            updateCharts(finalFiltered, evolutionData);
+                // Estadísticas de Modelos y Servicios
+                if (modelo !== "N/A") modelStats[modelo] = (modelStats[modelo] || 0) + 1;
+                serviceStats[detalle] = (serviceStats[detalle] || 0) + 1;
 
-            let html = "";
-            fullData.forEach(r => {
-                const esAnulado = r.tec.toUpperCase().includes('ANULADO');
-                const enFiltroActual = finalFiltered.includes(r);
-                if (!enFiltroActual && !(esAnulado && selS === 'ALL' && (selY === 'ALL' || r.fecha?.getFullYear().toString() === selY))) return;
+                // Preparación Evolución (Agrupado por Mes)
+                const [d, m, y] = fRef.split('/');
+                const monthKey = `${y}-${m}`;
+                if (!evolution[monthKey]) evolution[monthKey] = { total: 0, day: 0 };
+                evolution[monthKey].total += precio;
+                if (parseInt(d) > evolution[monthKey].day) evolution[monthKey].day = parseInt(d);
 
-                let pillClass = r.tec.toUpperCase() === 'TERMINADO' ? 'bg-terminado' : (r.tec === '' ? 'bg-vacio' : 'bg-proceso');
-                html += `<tr class="${esAnulado ? 'row-anulado' : ''}">
-                    <td><strong>${r.coti}</strong></td><td>${r.fechaStr}</td><td>${r.modelo}</td><td>${r.serie}</td>
-                    <td>${r.detalle.substring(0, 40)}...</td><td><span class="status-pill ${pillClass}">${r.tec || 'Sin Estado'}</span></td>
-                    <td><strong>${r.avance}</strong></td><td>${r.adm}</td><td>$ ${r.precio.toLocaleString('es-PE', {minimumFractionDigits:2})}</td>
+                // Llenado de Tabla
+                const row = `<tr>
+                    <td>${r["# COTI"]}</td><td>${fRef}</td><td>${modelo}</td>
+                    <td>${detalle.substring(0,30)}</td><td>${estTec}</td>
+                    <td><span class="status-pill bg-${estAdm.toLowerCase().replace(' ', '')}">${estAdm}</span></td>
+                    <td>${r["# OC VOLVO"] || '-'}</td><td>$ ${precio.toLocaleString()}</td>
                 </tr>`;
+                tableBody.insertAdjacentHTML('beforeend', row);
             });
-            document.getElementById('mainTable').querySelector('tbody').innerHTML = html;
+
+            // Actualizar KPIs
+            document.getElementById('kpi-total').innerText = validCount;
+            document.getElementById('kpi-monto').innerText = `$ ${kpiMonto.toLocaleString()}`;
+            document.getElementById('kpi-oc').innerText = `$ ${kpiOC.toLocaleString()}`;
+            document.getElementById('kpi-pendiente').innerText = `$ ${kpiPendiente.toLocaleString()}`;
+            document.getElementById('update-time').innerText = `Última actualización: ${new Date().toLocaleTimeString()}`;
+
+            renderCharts(adminStats, modelStats, serviceStats, evolution);
         }
 
-        function updateCharts(data, evolutionData) {
-            const estados = {}, servicios = {};
-            data.forEach(r => {
-                if(r.tec) estados[r.tec] = (estados[r.tec] || 0) + 1;
-                servicios[r.detalle] = (servicios[r.detalle] || 0) + 1;
+        function renderCharts(admin, models, services, evol) {
+            if (charts.admin) charts.admin.destroy();
+            charts.admin = new Chart(document.getElementById('chartAdmin'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(admin),
+                    datasets: [{ data: Object.values(admin), backgroundColor: ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#64748b'] }]
+                },
+                options: { maintainAspectRatio: false }
             });
 
-            if (chartDona) chartDona.destroy();
-            chartDona = new Chart(document.getElementById('chartDona'), {
-                type: 'doughnut',
-                data: { labels: Object.keys(estados), datasets: [{ data: Object.values(estados), backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444'], borderWidth: 0 }] },
-                options: { maintainAspectRatio: false, cutout: '70%' }
-            });
-
-            const top = Object.entries(servicios).sort((a,b) => b[1]-a[1]).slice(0,5);
-            if (chartBarra) chartBarra.destroy();
-            chartBarra = new Chart(document.getElementById('chartBarra'), {
-                type: 'bar',
-                data: { labels: top.map(s => s[0].substring(0,20)), datasets: [{ data: top.map(s => s[1]), backgroundColor: '#6366f1', borderRadius: 8 }] },
-                options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-
-            // --- LÓGICA DE NORMALIZACIÓN POR ÚLTIMO REGISTRO DEL MES ---
-            const evAgrupado = {};
-            const mesesNombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-            
-            evolutionData.forEach(r => {
-                if(!r.fecha) return;
-                const k = `${r.fecha.getFullYear()}-${String(r.fecha.getMonth()+1).padStart(2, '0')}`;
-                if (!evAgrupado[k]) evAgrupado[k] = { label: `${mesesNombres[r.fecha.getMonth()]} ${r.fecha.getFullYear()}`, total: 0, oc: 0, maxDay: 0 };
-                
-                evAgrupado[k].total += r.precio;
-                if(r.tieneOC) evAgrupado[k].oc += r.precio;
-                
-                // Extraer el día de la FECHA REF. y quedarnos con el más alto del mes
-                const diaRegistro = r.fecha.getDate();
-                if (diaRegistro > evAgrupado[k].maxDay) {
-                    evAgrupado[k].maxDay = diaRegistro;
-                }
-            });
-
-            const sortedKeys = Object.keys(evAgrupado).sort();
-            const labelsEv = [], dataCoti = [], dataOC = [], dataCrecimiento = [];
-            let promedioDiarioAnterior = 0;
-
-            sortedKeys.forEach(k => {
-                const mes = evAgrupado[k];
-                labelsEv.push(mes.label);
-                dataCoti.push(mes.total);
-                dataOC.push(mes.oc);
-
-                // Cálculo: Promedio Diario = Total Mes / Día del Último Registro
-                const promedioDiarioActual = mes.total / mes.maxDay;
-
-                if (promedioDiarioAnterior > 0) {
-                    const crecimiento = ((promedioDiarioActual - promedioDiarioAnterior) / promedioDiarioAnterior) * 100;
-                    dataCrecimiento.push(crecimiento.toFixed(1));
-                } else {
-                    dataCrecimiento.push(0);
-                }
-                promedioDiarioAnterior = promedioDiarioActual;
-            });
-
-            if (chartEvolucion) chartEvolucion.destroy();
-            chartEvolucion = new Chart(document.getElementById('chartEvolucion'), {
+            if (charts.models) charts.models.destroy();
+            const topModels = Object.entries(models).sort((a,b) => b[1]-a[1]).slice(0, 8);
+            charts.models = new Chart(document.getElementById('chartModelos'), {
                 type: 'bar',
                 data: {
-                    labels: labelsEv,
+                    labels: topModels.map(m => m[0]),
+                    datasets: [{ label: 'Frecuencia', data: topModels.map(m => m[1]), backgroundColor: '#6366f1' }]
+                },
+                options: { indexAxis: 'y', maintainAspectRatio: false }
+            });
+
+            // Lógica de Evolución con Crecimiento de Rendimiento Diario
+            const sortedMonths = Object.keys(evol).sort();
+            const evData = [], growthData = [];
+            let prevAvg = 0;
+
+            sortedMonths.forEach(m => {
+                const avg = evol[m].total / evol[m].day;
+                evData.push(evol[m].total);
+                growthData.push(prevAvg ? (((avg - prevAvg) / prevAvg) * 100).toFixed(1) : 0);
+                prevAvg = avg;
+            });
+
+            if (charts.evol) charts.evol.destroy();
+            charts.evol = new Chart(document.getElementById('chartEvolucion'), {
+                type: 'bar',
+                data: {
+                    labels: sortedMonths,
                     datasets: [
-                        { label: '% Crecimiento (vs Promedio Diario)', type: 'line', data: dataCrecimiento, borderColor: '#f59e0b', yAxisID: 'y1', tension: 0.4, borderWidth: 3, pointRadius: 5, fill: false },
-                        { label: 'Total Cotizaciones ($)', data: dataCoti, backgroundColor: 'rgba(59, 130, 246, 0.8)', borderRadius: 8, yAxisID: 'y' },
-                        { label: 'Total OC Volvo ($)', data: dataOC, backgroundColor: 'rgba(16, 185, 129, 0.8)', borderRadius: 8, yAxisID: 'y' }
+                        { label: 'Total Mes ($)', data: evData, backgroundColor: '#1e40af', yAxisID: 'y' },
+                        { label: '% Crecimiento Rendimiento', data: growthData, type: 'line', borderColor: '#f59e0b', yAxisID: 'y1' }
                     ]
                 },
-                options: {
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Monto Total ($)' } },
-                        y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '% Crecimiento Rendimiento' } }
-                    }
-                }
+                options: { maintainAspectRatio: false, scales: { y1: { position: 'right', grid: { display: false } } } }
+            });
+
+            if (charts.serv) charts.serv.destroy();
+            const topServ = Object.entries(services).sort((a,b) => b[1]-a[1]).slice(0, 5);
+            charts.serv = new Chart(document.getElementById('chartServicios'), {
+                type: 'doughnut',
+                data: {
+                    labels: topServ.map(s => s[0].substring(0,20)),
+                    datasets: [{ data: topServ.map(s => s[1]), backgroundColor: ['#2dd4bf', '#fb923c', '#818cf8', '#f472b6', '#a78bfa'] }]
+                },
+                options: { maintainAspectRatio: false, cutout: '60%' }
             });
         }
 
-        fetchData();
-        setInterval(fetchData, 300000);
+        init();
+        setInterval(init, 300000); // 5 min
     </script>
 </body>
 </html>
