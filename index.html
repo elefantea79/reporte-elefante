@@ -63,7 +63,16 @@
     <div class="table-container card">
         <table id="mainTable">
             <thead>
-                <tr><th>COTI</th><th>FECHA REF.</th><th>DETALLE</th><th>ESTADO TÉCNICO</th><th>ADMIN.</th><th>PRECIO</th></tr>
+                <tr>
+                    <th>COTI</th>
+                    <th>FECHA REF.</th>
+                    <th>MODELO</th>
+                    <th>SERIE</th>
+                    <th>DETALLE</th>
+                    <th>ESTADO TÉCNICO</th>
+                    <th>ADMIN.</th>
+                    <th>PRECIO</th>
+                </tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -99,6 +108,8 @@
                             coti: col["# COTI"] || col["COTI"] || "-",
                             fecha: dObj,
                             fechaStr: fechaRaw || 'S/F',
+                            modelo: col["MODELO"] || "-", // Nueva variable modelo
+                            serie: col["SERIE"] || "-",   // Nueva variable serie
                             detalle: col["DETALLE"] || "Sin Detalle",
                             tec: tec,
                             adm: adm,
@@ -168,7 +179,7 @@
                 html += `<tr class="${esAnulado ? 'row-anulado' : ''}">
                     <td><strong>${r.coti}</strong></td>
                     <td>${r.fechaStr}</td>
-                    <td>${r.detalle.substring(0, 50)}${r.detalle.length > 50 ? '...' : ''}</td>
+                    <td>${r.modelo}</td> <td>${r.serie}</td>  <td>${r.detalle.substring(0, 50)}${r.detalle.length > 50 ? '...' : ''}</td>
                     <td><span class="status-pill ${pillClass}">${r.tec || 'Sin Estado'}</span></td>
                     <td>${r.adm}</td>
                     <td>$ ${r.precio.toLocaleString('es-PE', {minimumFractionDigits:2})}</td>
