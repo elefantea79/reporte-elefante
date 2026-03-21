@@ -36,28 +36,32 @@
         .chart-wrapper { position: relative; height: 260px; width: 100%; }
         .chart-wrapper-main { position: relative; height: 320px; width: 100%; }
 
-        /* TABLA */
+        /* TABLA Y AJUSTES DE FUENTE */
         .table-container { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-        th { background: #f8fafc; padding: 12px 15px; text-align: left; border-bottom: 2px solid var(--border); font-weight: 600; color: var(--text-muted); }
+        /* Reducción de fuente a 0.76rem para encajar la serie */
+        table { width: 100%; border-collapse: collapse; font-size: 0.76rem; }
+        /* Reducción del padding horizontal de 15px a 10px */
+        th { background: #f8fafc; padding: 10px 10px; text-align: left; border-bottom: 2px solid var(--border); font-weight: 600; color: var(--text-muted); }
         
         .month-header { background: #f1f5f9; cursor: pointer; transition: background 0.2s; }
         .month-header:hover { background: #e2e8f0; }
-        .month-header td { padding: 12px 15px; border-bottom: 1px solid var(--border); }
+        .month-header td { padding: 10px 10px; border-bottom: 1px solid var(--border); }
         
         .toggle-icon { display: inline-block; width: 16px; font-size: 0.7rem; color: var(--primary); transition: transform 0.2s; }
-        .data-row td { padding: 10px 15px; border-bottom: 1px solid #f1f5f9; }
+        .data-row td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; }
         .data-row:hover { background-color: #f8fafc; }
         .hidden { display: none; }
         
-        .grand-total-row td { background-color: #f8fafc; padding: 15px; border-top: 2px solid var(--border); font-size: 0.95rem; }
+        .grand-total-row td { background-color: #f8fafc; padding: 12px 10px; border-top: 2px solid var(--border); font-size: 0.9rem; }
         
         /* PÍLDORAS DE ESTADO */
-        .status-pill { padding: 4px 8px; border-radius: 5px; font-weight: 600; font-size: 0.7rem; display: inline-block; }
+        .status-pill { padding: 3px 6px; border-radius: 5px; font-weight: 600; font-size: 0.68rem; display: inline-block; }
         .bg-terminado { background: #dcfce7; color: #166534; }
         .bg-proceso { background: #fef3c7; color: #92400e; }
         .bg-vacio { background: #e2e8f0; color: #475569; }
-        .bg-sin-oc { background: #fee2e2; color: #991b1b; } /* Nuevo estilo para Sin OC */
+        .bg-sin-oc { background: #fee2e2; color: #991b1b; } 
+        
+        .serie-id { font-family: monospace; font-size: 0.8rem; color: #475569; font-weight: bold; }
     </style>
 </head>
 <body id="dashboard-body">
@@ -129,7 +133,7 @@
                 <tr>
                     <th>MES / COTIZACIÓN</th>
                     <th>MODELO</th>
-                    <th>RESPONSABLE</th>
+                    <th>SERIE</th> <th>RESPONSABLE</th>
                     <th>ESTADO TÉC.</th>
                     <th>ESTADO ADMIN.</th>
                     <th># OC VOLVO</th>
@@ -219,32 +223,26 @@
                 if (selR !== 'ALL' && r["RESPONSABLE"] !== selR) return;
 
                 const precio = parseMoney(r["PRECIO SERVIC."]);
-                // Validación estricta de OC
                 const hasOC = r["# OC VOLVO"] && r["# OC VOLVO"].trim() !== "" && r["# OC VOLVO"].toUpperCase() !== "PENDIENTE";
                 const estadoFinal = estTec || "S/E";
                 
-                // CÁLCULO FINANCIERO CORREGIDO (Total = OC + Pendiente)
                 totalVal += precio;
                 count++;
                 
                 if (hasOC) {
                     totalOC += precio;
                 } else {
-                    totalPendiente += precio; // Todo lo que no tiene OC suma al pendiente
-                    
-                    // Acumulamos para el nuevo gráfico de dona de Pendientes
+                    totalPendiente += precio; 
                     const estAdmin = r["ESTADO ADMIN."] ? r["ESTADO ADMIN."].trim() : "SIN ESTADO";
                     statsAdminPend[estAdmin] = (statsAdminPend[estAdmin] || 0) + precio;
                 }
 
-                // Stats para gráfico de meses
                 const mKey = `${yy}-${mm}`;
                 if (!statsMonth[mKey]) statsMonth[mKey] = { total: 0, oc: 0, maxDay: 0, name: mm };
                 statsMonth[mKey].total += precio;
                 if (hasOC) statsMonth[mKey].oc += precio;
                 if (parseInt(dd) > statsMonth[mKey].maxDay) statsMonth[mKey].maxDay = parseInt(dd);
 
-                // Otros stats
                 statsTec[estadoFinal] = (statsTec[estadoFinal] || 0) + 1;
                 const detalle = r["DETALLE"] ? r["DETALLE"].trim() : "Sin Detalle"; 
                 statsServ[detalle] = (statsServ[detalle] || 0) + 1;
@@ -299,7 +297,6 @@
         }
 
         function renderSubCharts(tec, adminPend, serv) {
-            // 1. Gráfico: Estado Técnico
             if (chartInstances.tec) chartInstances.tec.destroy();
             chartInstances.tec = new Chart(document.getElementById('chartTec'), {
                 type: 'doughnut',
@@ -307,7 +304,6 @@
                 options: { maintainAspectRatio: false, cutout: '65%' }
             });
 
-            // 2. NUEVO Gráfico: Desglose de Pendientes (Estado Admin)
             if (chartInstances.admin) chartInstances.admin.destroy();
             chartInstances.admin = new Chart(document.getElementById('chartAdmin'), {
                 type: 'doughnut',
@@ -337,7 +333,6 @@
                 }
             });
 
-            // 3. Gráfico: Top 5 Servicios
             if (chartInstances.serv) chartInstances.serv.destroy();
             const topS = Object.entries(serv).sort((a,b) => b[1]-a[1]).slice(0, 5);
             chartInstances.serv = new Chart(document.getElementById('chartServ'), {
@@ -394,26 +389,28 @@
 
             Object.keys(grouped).sort().reverse().forEach(k => {
                 const g = grouped[k];
+                // ¡AQUÍ SE AJUSTÓ EL COLSPAN A 7!
                 container.insertAdjacentHTML('beforeend', `<tr class="month-header" onclick="toggleMonth('${k}')">
-                    <td colspan="6"><span class="toggle-icon" id="icon-${k}">►</span> <strong style="color: var(--primary); font-size: 0.9rem;">${g.name}</strong> <span style="color:var(--text-muted); font-weight:normal; font-size: 0.8rem; margin-left: 5px;">(${g.items.length} registros)</span></td>
+                    <td colspan="7"><span class="toggle-icon" id="icon-${k}">►</span> <strong style="color: var(--primary); font-size: 0.9rem;">${g.name}</strong> <span style="color:var(--text-muted); font-weight:normal; font-size: 0.8rem; margin-left: 5px;">(${g.items.length} registros)</span></td>
                     <td style="text-align:right; font-weight:700; color: var(--primary);">$ ${g.total.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
                 </tr>`);
 
                 g.items.forEach(i => {
-                    const detalleStr = (i["DETALLE"] || "Sin Detalle").substring(0,35);
+                    const detalleStr = (i["DETALLE"] || "Sin Detalle").substring(0,30); // Acortado un poco más el detalle para dar espacio
                     const estado = (i["ESTADO TÉCNICO"] || '').trim();
+                    const serie = (i["SERIE"] || '-').trim();
                     const hasOC = i["# OC VOLVO"] && i["# OC VOLVO"].trim() !== "" && i["# OC VOLVO"].toUpperCase() !== "PENDIENTE";
                     
                     let pillClass = estado === 'Terminado' ? 'bg-terminado' : (estado === '' ? 'bg-vacio' : 'bg-proceso');
                     
-                    // Lógica para sombreado en la COTI si NO tiene OC
                     let cotiHTML = hasOC ? 
                         `<strong>${i["# COTI"]}</strong>` : 
                         `<span class="status-pill bg-sin-oc" title="Pendiente de OC">${i["# COTI"]}</span>`;
                     
                     container.insertAdjacentHTML('beforeend', `<tr class="data-row row-${k} hidden">
-                        <td style="padding-left:35px;">${cotiHTML} - ${detalleStr}</td>
-                        <td>${i["MODELO"]}</td><td>${i["RESPONSABLE"]}</td>
+                        <td style="padding-left:25px;">${cotiHTML} - ${detalleStr}</td>
+                        <td>${i["MODELO"]}</td>
+                        <td><span class="serie-id">${serie}</span></td> <td>${i["RESPONSABLE"]}</td>
                         <td><span class="status-pill ${pillClass}">${estado || 'S/E'}</span></td>
                         <td>${i["ESTADO ADMIN."]}</td><td>${i["# OC VOLVO"] || '-'}</td>
                         <td style="text-align:right">$ ${parseMoney(i["PRECIO SERVIC."]).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
@@ -422,8 +419,9 @@
             });
 
             if (grandTotal > 0) {
+                // ¡AQUÍ TAMBIÉN SE AJUSTÓ EL COLSPAN A 7!
                 container.insertAdjacentHTML('beforeend', `<tr class="grand-total-row">
-                    <td colspan="6" style="text-align:right; font-weight:800; color: var(--text-main);">TOTAL GENERAL DEL PERIODO</td>
+                    <td colspan="7" style="text-align:right; font-weight:800; color: var(--text-main);">TOTAL GENERAL DEL PERIODO</td>
                     <td style="text-align:right; font-weight:800; font-size:1.1rem; color: var(--primary);">$ ${grandTotal.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
                 </tr>`);
             }
