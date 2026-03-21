@@ -16,14 +16,13 @@
         .header-left h1 { margin: 0; font-size: 1.6rem; color: var(--primary); }
         .header-left p { margin: 6px 0 0; color: var(--text-muted); font-size: 0.85rem; }
         
-        /* Filtros limpios estilo segunda imagen pero verticales */
         .filters-container { display: flex; flex-direction: column; gap: 10px; width: 220px; }
         .filter-select { padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 0.85rem; color: var(--text-main); background-color: #fff; cursor: pointer; outline: none; transition: border-color 0.2s; }
         .filter-select:hover, .filter-select:focus { border-color: var(--primary); }
         .btn-pdf { background: #dc2626; color: white; border: none; padding: 9px; border-radius: 6px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem; margin-top: 5px; transition: background 0.2s; }
         .btn-pdf:hover { background: #b91c1c; }
 
-        /* TARJETAS KPI (Compactas) */
+        /* TARJETAS KPI */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .card-kpi { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center; }
         .kpi-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 5px; }
@@ -31,13 +30,13 @@
 
         /* GRÁFICOS */
         .main-chart-container { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .small-chart { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .chart-title { margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; color: #0f172a; }
-        .chart-wrapper { position: relative; height: 280px; width: 100%; }
+        .charts-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
+        .small-chart { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; box-shadow: 0 2px 4px rgba(0,0,0,0.02); min-width: 0; }
+        .chart-title { margin-top: 0; margin-bottom: 15px; font-size: 0.95rem; color: #0f172a; text-align: center; }
+        .chart-wrapper { position: relative; height: 260px; width: 100%; }
         .chart-wrapper-main { position: relative; height: 320px; width: 100%; }
 
-        /* TABLA Y ESTILOS DE HISTORIAL */
+        /* TABLA */
         .table-container { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
         th { background: #f8fafc; padding: 12px 15px; text-align: left; border-bottom: 2px solid var(--border); font-weight: 600; color: var(--text-muted); }
@@ -53,15 +52,16 @@
         
         .grand-total-row td { background-color: #f8fafc; padding: 15px; border-top: 2px solid var(--border); font-size: 0.95rem; }
         
+        /* PÍLDORAS DE ESTADO */
         .status-pill { padding: 4px 8px; border-radius: 5px; font-weight: 600; font-size: 0.7rem; display: inline-block; }
         .bg-terminado { background: #dcfce7; color: #166534; }
         .bg-proceso { background: #fef3c7; color: #92400e; }
         .bg-vacio { background: #e2e8f0; color: #475569; }
+        .bg-sin-oc { background: #fee2e2; color: #991b1b; } /* Nuevo estilo para Sin OC */
     </style>
 </head>
 <body id="dashboard-body">
 
-    <!-- CABECERA CON FILTROS INDEPENDIENTES VERTICALES -->
     <div class="header">
         <div class="header-left">
             <h1>Reporte Operativo Elefante S.A.C.</h1>
@@ -82,18 +82,17 @@
         </div>
     </div>
 
-    <!-- TARJETAS KPI COMPACTAS -->
     <div class="kpi-grid">
         <div class="card-kpi">
             <div class="kpi-label">Cotizaciones Válidas</div>
             <div class="kpi-value" id="kpi-qty">0</div>
         </div>
         <div class="card-kpi">
-            <div class="kpi-label">Monto Acumulado</div>
+            <div class="kpi-label">Monto Acumulado (Total)</div>
             <div class="kpi-value" id="kpi-monto-total">$ 0.00</div>
         </div>
         <div class="card-kpi">
-            <div class="kpi-label">Orden de Compra</div>
+            <div class="kpi-label">Orden de Compra (OC)</div>
             <div class="kpi-value" id="kpi-monto-oc" style="color: var(--secondary);">$ 0.00</div>
         </div>
         <div class="card-kpi">
@@ -102,9 +101,8 @@
         </div>
     </div>
 
-    <!-- GRÁFICOS -->
     <div class="main-chart-container">
-        <h3 class="chart-title">Evolución Mensual y Crecimiento</h3>
+        <h3 class="chart-title" style="text-align: left; font-size: 1.1rem;">Evolución Mensual y Crecimiento</h3>
         <div class="chart-wrapper-main">
             <canvas id="chartMain"></canvas>
         </div>
@@ -116,12 +114,15 @@
             <div class="chart-wrapper"><canvas id="chartTec"></canvas></div>
         </div>
         <div class="small-chart">
+            <h3 class="chart-title">Desglose: Pendiente de Cobro (Sin OC)</h3>
+            <div class="chart-wrapper"><canvas id="chartAdmin"></canvas></div>
+        </div>
+        <div class="small-chart">
             <h3 class="chart-title">Top 5 Servicios Solicitados</h3>
             <div class="chart-wrapper"><canvas id="chartServ"></canvas></div>
         </div>
     </div>
 
-    <!-- TABLA DE HISTORIAL CON FLECHAS Y TOTAL GENERAL -->
     <div class="table-container">
         <table id="dataTable">
             <thead>
@@ -199,7 +200,7 @@
             tbody.innerHTML = '';
 
             let totalVal = 0, totalOC = 0, totalPendiente = 0, count = 0;
-            const statsTec = {}, statsServ = {}, statsMonth = {};
+            const statsTec = {}, statsServ = {}, statsMonth = {}, statsAdminPend = {};
 
             dataGlobal.forEach(r => {
                 const fecha = r["FECHA COTIZACION"] || r["FECHA INICIO"] || "";
@@ -218,24 +219,32 @@
                 if (selR !== 'ALL' && r["RESPONSABLE"] !== selR) return;
 
                 const precio = parseMoney(r["PRECIO SERVIC."]);
+                // Validación estricta de OC
                 const hasOC = r["# OC VOLVO"] && r["# OC VOLVO"].trim() !== "" && r["# OC VOLVO"].toUpperCase() !== "PENDIENTE";
                 const estadoFinal = estTec || "S/E";
                 
+                // CÁLCULO FINANCIERO CORREGIDO (Total = OC + Pendiente)
                 totalVal += precio;
                 count++;
                 
                 if (hasOC) {
                     totalOC += precio;
-                } else if (estadoFinal.toUpperCase() === 'TERMINADO') {
-                    totalPendiente += precio;
+                } else {
+                    totalPendiente += precio; // Todo lo que no tiene OC suma al pendiente
+                    
+                    // Acumulamos para el nuevo gráfico de dona de Pendientes
+                    const estAdmin = r["ESTADO ADMIN."] ? r["ESTADO ADMIN."].trim() : "SIN ESTADO";
+                    statsAdminPend[estAdmin] = (statsAdminPend[estAdmin] || 0) + precio;
                 }
 
+                // Stats para gráfico de meses
                 const mKey = `${yy}-${mm}`;
                 if (!statsMonth[mKey]) statsMonth[mKey] = { total: 0, oc: 0, maxDay: 0, name: mm };
                 statsMonth[mKey].total += precio;
                 if (hasOC) statsMonth[mKey].oc += precio;
                 if (parseInt(dd) > statsMonth[mKey].maxDay) statsMonth[mKey].maxDay = parseInt(dd);
 
+                // Otros stats
                 statsTec[estadoFinal] = (statsTec[estadoFinal] || 0) + 1;
                 const detalle = r["DETALLE"] ? r["DETALLE"].trim() : "Sin Detalle"; 
                 statsServ[detalle] = (statsServ[detalle] || 0) + 1;
@@ -249,7 +258,7 @@
             document.getElementById('update-tag').innerText = `Actualizado: ${new Date().toLocaleTimeString()} - Filtros aplicados`;
 
             renderMainChart(statsMonth);
-            renderSubCharts(statsTec, statsServ);
+            renderSubCharts(statsTec, statsAdminPend, statsServ);
             renderTable(selY, selM, selS, selR);
         }
 
@@ -289,7 +298,8 @@
             });
         }
 
-        function renderSubCharts(tec, serv) {
+        function renderSubCharts(tec, adminPend, serv) {
+            // 1. Gráfico: Estado Técnico
             if (chartInstances.tec) chartInstances.tec.destroy();
             chartInstances.tec = new Chart(document.getElementById('chartTec'), {
                 type: 'doughnut',
@@ -297,6 +307,37 @@
                 options: { maintainAspectRatio: false, cutout: '65%' }
             });
 
+            // 2. NUEVO Gráfico: Desglose de Pendientes (Estado Admin)
+            if (chartInstances.admin) chartInstances.admin.destroy();
+            chartInstances.admin = new Chart(document.getElementById('chartAdmin'), {
+                type: 'doughnut',
+                data: { 
+                    labels: Object.keys(adminPend), 
+                    datasets:[{ 
+                        data: Object.values(adminPend), 
+                        backgroundColor:['#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9', '#64748b'], 
+                        borderWidth: 0 
+                    }] 
+                },
+                options: { 
+                    maintainAspectRatio: false, 
+                    cutout: '65%',
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) { label += ': '; }
+                                    label += '$ ' + context.raw.toLocaleString('en-US', {minimumFractionDigits:2});
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 3. Gráfico: Top 5 Servicios
             if (chartInstances.serv) chartInstances.serv.destroy();
             const topS = Object.entries(serv).sort((a,b) => b[1]-a[1]).slice(0, 5);
             chartInstances.serv = new Chart(document.getElementById('chartServ'), {
@@ -306,7 +347,6 @@
             });
         }
 
-        // Función para rotar la flecha y ocultar/mostrar filas
         function toggleMonth(key) {
             const icon = document.getElementById('icon-' + key);
             const rows = document.querySelectorAll('.row-' + key);
@@ -324,7 +364,7 @@
             const container = document.getElementById('tableBody');
             const grouped = {};
             const meses =["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-            let grandTotal = 0; // Variable para el Total General
+            let grandTotal = 0; 
 
             dataGlobal.forEach(r => {
                 const f = r["FECHA COTIZACION"] || r["FECHA INICIO"] || "";
@@ -349,12 +389,11 @@
                 grouped[k].total += precio;
                 grouped[k].items.push(r);
                 
-                grandTotal += precio; // Sumar al gran total
+                grandTotal += precio; 
             });
 
             Object.keys(grouped).sort().reverse().forEach(k => {
                 const g = grouped[k];
-                // Nueva fila de cabecera de mes con flecha interactiva
                 container.insertAdjacentHTML('beforeend', `<tr class="month-header" onclick="toggleMonth('${k}')">
                     <td colspan="6"><span class="toggle-icon" id="icon-${k}">►</span> <strong style="color: var(--primary); font-size: 0.9rem;">${g.name}</strong> <span style="color:var(--text-muted); font-weight:normal; font-size: 0.8rem; margin-left: 5px;">(${g.items.length} registros)</span></td>
                     <td style="text-align:right; font-weight:700; color: var(--primary);">$ ${g.total.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
@@ -363,10 +402,17 @@
                 g.items.forEach(i => {
                     const detalleStr = (i["DETALLE"] || "Sin Detalle").substring(0,35);
                     const estado = (i["ESTADO TÉCNICO"] || '').trim();
+                    const hasOC = i["# OC VOLVO"] && i["# OC VOLVO"].trim() !== "" && i["# OC VOLVO"].toUpperCase() !== "PENDIENTE";
+                    
                     let pillClass = estado === 'Terminado' ? 'bg-terminado' : (estado === '' ? 'bg-vacio' : 'bg-proceso');
                     
+                    // Lógica para sombreado en la COTI si NO tiene OC
+                    let cotiHTML = hasOC ? 
+                        `<strong>${i["# COTI"]}</strong>` : 
+                        `<span class="status-pill bg-sin-oc" title="Pendiente de OC">${i["# COTI"]}</span>`;
+                    
                     container.insertAdjacentHTML('beforeend', `<tr class="data-row row-${k} hidden">
-                        <td style="padding-left:35px;"><strong>${i["# COTI"]}</strong> - ${detalleStr}</td>
+                        <td style="padding-left:35px;">${cotiHTML} - ${detalleStr}</td>
                         <td>${i["MODELO"]}</td><td>${i["RESPONSABLE"]}</td>
                         <td><span class="status-pill ${pillClass}">${estado || 'S/E'}</span></td>
                         <td>${i["ESTADO ADMIN."]}</td><td>${i["# OC VOLVO"] || '-'}</td>
@@ -375,7 +421,6 @@
                 });
             });
 
-            // Fila de Total General al final de la tabla
             if (grandTotal > 0) {
                 container.insertAdjacentHTML('beforeend', `<tr class="grand-total-row">
                     <td colspan="6" style="text-align:right; font-weight:800; color: var(--text-main);">TOTAL GENERAL DEL PERIODO</td>
@@ -385,7 +430,6 @@
         }
 
         function exportPDF() {
-            // Expande todas las filas temporalmente para el PDF y cambia las flechas
             document.querySelectorAll('.data-row').forEach(r => r.classList.remove('hidden'));
             document.querySelectorAll('.toggle-icon').forEach(icon => icon.innerText = '▼');
 
@@ -393,7 +437,6 @@
             const opt = { margin: 0.3, filename: 'Reporte_Operativo_Elefante.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' } };
             
             html2pdf().set(opt).from(element).save().then(() => {
-                // Restaura al estado original (ocultas) después de exportar
                 document.querySelectorAll('.data-row').forEach(r => r.classList.add('hidden'));
                 document.querySelectorAll('.toggle-icon').forEach(icon => icon.innerText = '►');
             });
