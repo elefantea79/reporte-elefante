@@ -3,674 +3,573 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Central - Elefante S.A.C.</title>
-    <!-- Librerías -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Elefante S.A.C. - Dashboard Operativo</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        :root { 
+            --primary: #00508F; 
+            --sidebar-bg: #0f172a;
+            --bg: #f8fafc; 
+        }
+        body { background-color: var(--bg); font-family: 'Segoe UI', sans-serif; color: #1e293b; }
+        .sidebar { background-color: var(--sidebar-bg); width: 260px; }
+        .sidebar-item { cursor: pointer; color: #94a3b8; border-left: 4px solid transparent; transition: 0.2s; }
+        .sidebar-item.active { border-left-color: #3b82f6; background: #1e293b; color: white; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
         
-        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; overflow: hidden; }
+        .status-pill { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+        .bg-terminado { background: #dcfce7; color: #166534; }
+        .bg-proceso { background: #fef3c7; color: #92400e; }
+        
+        /* Dropdown Corregido (Click en lugar de Hover) */
+        .dropdown-content { 
+            display: none; position: absolute; background: white; min-width: 200px; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1); z-index: 100; border-radius: 8px; 
+            max-height: 400px; overflow-y: auto; border: 1px solid #e2e8f0; right: 0;
+        }
+        .dropdown-content.show { display: block; }
+        
+        /* Maestro Máquina */
+        .master-row { cursor: pointer; transition: background 0.2s; }
+        .master-row:hover { background: #f1f5f9; }
+        .series-list { background: #f8fafc; display: none; }
+        .series-list.active { display: table-row; }
 
-        /* MULTI-SELECT DROPDOWNS */
-        .multi-dropdown { position: relative; display: inline-block; }
-        .multi-dropdown-btn { background: white; border: 1px solid #cbd5e1; padding: 8px 15px; border-radius: 6px; font-size: 0.85rem; color: #1e293b; cursor: pointer; display: flex; align-items: center; justify-content: space-between; min-width: 160px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);}
-        .multi-dropdown-btn:hover { border-color: #00508F; }
-        .multi-dropdown-content { display: none; position: absolute; background-color: #ffffff; min-width: 220px; max-height: 300px; overflow-y: auto; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1); z-index: 100; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 4px; }
-        .multi-dropdown-content.show { display: block; }
-        .multi-dropdown-content label { display: block; padding: 8px 12px; cursor: pointer; font-size: 0.85rem; border-bottom: 1px solid #f1f5f9; }
-        .multi-dropdown-content label:hover { background-color: #f8fafc; }
-        .multi-dropdown-content input[type="checkbox"] { margin-right: 8px; cursor: pointer; accent-color: #00508F;}
+        .growth-positive { color: #10b981; }
+        .growth-negative { color: #ef4444; }
 
-        /* ACORDEÓN TABLA */
-        .month-header { background: #f1f5f9; cursor: pointer; transition: background 0.2s; }
-        .month-header:hover { background: #e2e8f0; }
-        .month-header td { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
-        .toggle-icon { display: inline-block; width: 20px; font-size: 0.8rem; color: #00508F; transition: transform 0.2s; }
-        .toggle-icon.open { transform: rotate(90deg); }
-        .data-row td { padding: 10px 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.8rem; }
-        .data-row:hover { background-color: #f8fafc; }
-        .hidden { display: none !important; }
-
-        /* PÍLDORAS */
-        .status-pill { padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.65rem; display: inline-block; text-align: center; text-transform: uppercase; letter-spacing: 0.05em;}
-        .bg-oc-proc { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;}
-        .bg-oc-proceso { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe;}
-        .bg-oc-pend { background: #fef3c7; color: #92400e; border: 1px solid #fde68a;}
-        .bg-anulado { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;}
-        .bg-eval { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff;}
-
-        /* SCROLLBARS */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Estilo para Fecha OC con datos */
+        .date-active { background: #dbeafe; color: #1e40af; font-weight: 700; border-radius: 4px; padding: 2px 4px; }
     </style>
 </head>
-<body class="flex h-screen w-full">
+<body class="flex min-h-screen">
 
-    <!-- SIDEBAR (MENÚ DE PROYECTOS) -->
-    <aside class="w-64 bg-slate-900 text-white flex flex-col flex-shrink-0 z-50">
-        <div class="p-6 border-b border-slate-800">
-            <h2 class="text-xl font-black flex items-center gap-2 tracking-tight">
-                <i class="fas fa-layer-group text-blue-500"></i> Panel Central
-            </h2>
-        </div>
-        
-        <div class="flex-1 overflow-y-auto p-4 space-y-6">
-            <!-- Selector de Proyectos -->
+    <aside class="sidebar text-white hidden md:flex flex-col p-6 shrink-0">
+        <div class="flex items-center space-x-3 mb-10">
+            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl font-mono">E</div>
             <div>
-                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 px-2">Mis Proyectos</p>
-                <nav class="space-y-1">
-                    <button onclick="switchProject('elefante')" id="proj-elefante" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors bg-blue-600 text-white">
-                        <i class="fas fa-truck-monster w-5"></i> <span class="text-sm font-semibold">Pintado Elefante</span>
-                    </button>
-                    <button onclick="switchProject('nuevo')" id="proj-nuevo" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-slate-400 hover:bg-slate-800">
-                        <i class="fas fa-plus-circle w-5"></i> <span class="text-sm font-medium">Nuevo Proyecto</span>
-                    </button>
-                </nav>
-            </div>
-
-            <!-- Menú del Proyecto Activo (Elefante) -->
-            <div id="menu-elefante">
-                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 px-2">Herramientas</p>
-                <nav class="space-y-1">
-                    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-slate-800 text-blue-400 font-medium transition-colors">
-                        <div class="flex items-center gap-3 text-sm"><i class="fas fa-chart-line w-4"></i> Dashboard</div>
-                        <i class="fas fa-chevron-right text-[10px]"></i>
-                    </button>
-                    <button onclick="switchTab('detalle')" id="tab-detalle" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 transition-colors">
-                        <div class="flex items-center gap-3 text-sm"><i class="fas fa-list w-4"></i> Detalle Cotiz.</div>
-                        <i class="fas fa-chevron-right text-[10px] hidden" id="chev-detalle"></i>
-                    </button>
-                    <button onclick="switchTab('maestro')" id="tab-maestro" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 transition-colors">
-                        <div class="flex items-center gap-3 text-sm"><i class="fas fa-cogs w-4"></i> Maestro Máq.</div>
-                        <i class="fas fa-chevron-right text-[10px] hidden" id="chev-maestro"></i>
-                    </button>
-                </nav>
+                <h1 class="text-lg font-bold leading-tight">ELEFANTE</h1>
+                <p class="text-[10px] text-blue-400 tracking-widest uppercase">Servicios SAC</p>
             </div>
         </div>
-
-        <div class="p-4 border-t border-slate-800 text-center">
-            <button onclick="exportPDF()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm font-bold transition-colors">
-                <i class="fas fa-file-pdf mr-2"></i> Exportar PDF
-            </button>
+        <nav class="flex-1 space-y-1">
+            <div onclick="showPage('resumen', this)" class="sidebar-item active p-3 rounded-lg flex items-center space-x-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                <span>Resumen</span>
+            </div>
+            <div onclick="showPage('detalle', this)" class="sidebar-item p-3 rounded-lg flex items-center space-x-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                <span>Detalle Cotizaciones</span>
+            </div>
+            <div onclick="showPage('maestro', this)" class="sidebar-item p-3 rounded-lg flex items-center space-x-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                <span>Maestro Máquinas</span>
+            </div>
+        </nav>
+        <div class="mt-auto pt-6 border-t border-slate-700">
+            <button onclick="window.print()" class="w-full bg-blue-600 hover:bg-blue-700 p-2.5 rounded-lg text-xs font-bold uppercase">Exportar Reporte</button>
         </div>
     </aside>
 
-    <!-- CONTENIDO PRINCIPAL -->
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50 relative">
-        
-        <!-- PROYECTO ELEFANTE -->
-        <div id="workspace-elefante" class="flex flex-col h-full overflow-y-auto">
-            
-            <!-- HEADER -->
-            <header class="bg-white border-b border-slate-200 px-8 py-5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 sticky top-0 z-40">
-                <div>
-                    <h1 class="text-2xl font-black text-slate-800 tracking-tight">Reporte Operativo Elefante</h1>
-                    <div class="flex items-center gap-3 mt-1">
-                        <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">Expresado en Dólares (USD)</span>
-                        <span id="update-tag" class="text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded border border-emerald-200"><i class="fas fa-sync fa-spin mr-1"></i> Conectando a Google Sheets...</span>
-                    </div>
-                </div>
-                
-                <!-- FILTROS -->
-                <div class="flex flex-wrap items-center gap-3">
-                    <div class="multi-dropdown">
-                        <button class="multi-dropdown-btn" onclick="toggleDrop('drop-year')">
-                            <span id="label-year" class="font-semibold">Año: Todos</span> <i class="fas fa-chevron-down text-slate-400"></i>
-                        </button>
-                        <div id="drop-year" class="multi-dropdown-content">
-                            <label class="font-bold bg-slate-50"><input type="checkbox" id="all-year" checked onchange="toggleAll(this, 'list-year')"> Seleccionar Todos</label>
-                            <div id="list-year"></div>
-                        </div>
-                    </div>
-                    <div class="multi-dropdown">
-                        <button class="multi-dropdown-btn" onclick="toggleDrop('drop-month')">
-                            <span id="label-month" class="font-semibold">Mes: Todos</span> <i class="fas fa-chevron-down text-slate-400"></i>
-                        </button>
-                        <div id="drop-month" class="multi-dropdown-content">
-                            <label class="font-bold bg-slate-50"><input type="checkbox" id="all-month" checked onchange="toggleAll(this, 'list-month')"> Seleccionar Todos</label>
-                            <div id="list-month"></div>
-                        </div>
-                    </div>
-                    <div class="multi-dropdown">
-                        <button class="multi-dropdown-btn" onclick="toggleDrop('drop-resp')">
-                            <span id="label-resp" class="font-semibold">Resp.: Todos</span> <i class="fas fa-chevron-down text-slate-400"></i>
-                        </button>
-                        <div id="drop-resp" class="multi-dropdown-content">
-                            <label class="font-bold bg-slate-50"><input type="checkbox" id="all-resp" checked onchange="toggleAll(this, 'list-resp')"> Seleccionar Todos</label>
-                            <div id="list-resp"></div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <div class="p-8">
-                <!-- VISTA 1: DASHBOARD -->
-                <div id="view-dashboard" class="space-y-6">
-                    <!-- KPIs -->
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-t-4 border-t-slate-700">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nro Cotizaciones</p>
-                            <p class="text-2xl font-black text-slate-800" id="kpi-qty">0</p>
-                        </div>
-                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-t-4 border-t-[#00508F]">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Cotizaciones ($)</p>
-                            <p class="text-2xl font-black text-[#00508F]" id="kpi-monto-total">0.00</p>
-                        </div>
-                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-t-4 border-t-[#10b981]">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">OC Procesada</p>
-                            <p class="text-2xl font-black text-[#10b981]" id="kpi-monto-oc">0.00</p>
-                        </div>
-                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-t-4 border-t-[#3b82f6]">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">OC en Proceso</p>
-                            <p class="text-2xl font-black text-[#3b82f6]" id="kpi-monto-proc">0.00</p>
-                        </div>
-                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-t-4 border-t-[#f59e0b]">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">OC Pendiente</p>
-                            <p class="text-2xl font-black text-[#f59e0b]" id="kpi-monto-pend">0.00</p>
-                        </div>
-                    </div>
-
-                    <!-- Gráficos Fila 1 -->
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                            <h3 class="font-bold text-slate-800 mb-4">Cotizaciones vs OC Procesada</h3>
-                            <div class="h-[280px] w-full"><canvas id="chartMain"></canvas></div>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                            <h3 class="font-bold text-slate-800 mb-4 text-center">Distribución Administrativa</h3>
-                            <div class="h-[240px] w-full"><canvas id="chartAdmin"></canvas></div>
-                        </div>
-                    </div>
-
-                    <!-- Gráficos Fila 2 -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                            <h3 class="font-bold text-slate-800 mb-4">Top 5 Tipos de Servicio</h3>
-                            <div class="h-[280px] w-full"><canvas id="chartServicios"></canvas></div>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                            <h3 class="font-bold text-slate-800 mb-4">Tipos de Máquina (Modelos)</h3>
-                            <div class="h-[280px] w-full"><canvas id="chartModelos"></canvas></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- VISTA 2: DETALLE COTIZACIONES -->
-                <div id="view-detalle" class="hidden">
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-50 border-b border-slate-200">
-                                    <tr>
-                                        <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">COTI</th>
-                                        <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">FECHA INICIO</th>
-                                        <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">MODELO</th>
-                                        <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">SERIE</th> 
-                                        <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">DETALLE</th>
-                                        <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ESTADO TÉC.</th>
-                                        <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">FECHA OC</th>
-                                        <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ESTADO ADMIN.</th>
-                                        <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ESTATUS</th>
-                                        <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">MONTO</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tableBody" class="bg-white"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- VISTA 3: MAESTRO MÁQUINAS -->
-                <div id="view-maestro" class="hidden">
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden max-w-4xl mx-auto">
-                        <table class="w-full text-left">
-                            <thead class="bg-slate-50 border-b border-slate-200">
-                                <tr>
-                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Fabricante</th>
-                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Modelo</th>
-                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Cantidad (Válidas)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="maestroBody" class="divide-y divide-slate-100"></tbody>
-                        </table>
-                    </div>
-                </div>
-
+    <main class="flex-1 flex flex-col min-w-0">
+        <header class="h-20 bg-white border-b flex items-center justify-between px-8 shrink-0">
+            <div>
+                <h2 id="view-title" class="text-slate-800 font-bold text-lg">Panel de Control Operativo</h2>
+                <p id="last-update" class="text-[11px] text-slate-500 italic">Sincronizando datos...</p>
             </div>
-        </div>
-
-        <!-- ESPACIO NUEVO PROYECTO -->
-        <div id="workspace-nuevo" class="hidden flex-1 p-8 items-center justify-center bg-slate-50">
-            <div class="text-center max-w-md">
-                <div class="w-20 h-20 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-folder-plus text-slate-400 text-3xl"></i>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button onclick="toggleMonthsDropdown()" class="bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2">
+                        <span>Filtro de Meses</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="filter-months" class="dropdown-content mt-2 p-4"></div>
                 </div>
-                <h2 class="text-2xl font-bold text-slate-800 mb-2">Nuevo Proyecto en Blanco</h2>
-                <p class="text-slate-500 mb-8">Este espacio está listo para integrar un nuevo reporte o base de datos. Mantendrás el dashboard de Elefante intacto en la otra pestaña.</p>
-                <button class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:bg-blue-700 transition-colors">
-                    Configurar Módulo
-                </button>
+                <select id="filter-year" onchange="processData()" class="bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg text-xs font-semibold outline-none"></select>
+            </div>
+        </header>
+
+        <div id="content-scroll" class="p-8 overflow-y-auto flex-1 space-y-8">
+            <!-- KPIs -->
+            <div id="page-resumen" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div class="card p-5 border-l-4 border-blue-600">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nro Cotizaciones</span>
+                        <div id="kpi-qty" class="text-2xl font-black text-slate-800 mt-1">0</div>
+                    </div>
+                    <div class="card p-5 border-l-4 border-slate-800">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Cotizado ($)</span>
+                        <div id="kpi-monto-total" class="text-2xl font-black text-slate-800 mt-1">$ 0.00</div>
+                    </div>
+                    <div class="card p-5 border-l-4 border-emerald-500">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">OC Procesada</span>
+                        <div id="kpi-monto-oc" class="text-2xl font-black text-emerald-600 mt-1">$ 0.00</div>
+                    </div>
+                    <div class="card p-5 border-l-4 border-amber-500">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">OC en Proceso</span>
+                        <div id="kpi-monto-proceso" class="text-2xl font-black text-amber-600 mt-1">$ 0.00</div>
+                    </div>
+                    <div class="card p-5 border-l-4 border-rose-500">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">OC Pendiente</span>
+                        <div id="kpi-monto-pend" class="text-2xl font-black text-rose-600 mt-1">$ 0.00</div>
+                    </div>
+                </div>
+
+                <!-- Gráficos Principales -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card p-6">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-700">Cotizaciones vs OC Procesada</h3>
+                                <p class="text-[10px] text-slate-500 italic mt-1">Comparativa de avance y crecimiento normalizado por días</p>
+                            </div>
+                            <div id="growth-summary" class="text-right">
+                                <!-- Se llena dinámicamente -->
+                            </div>
+                        </div>
+                        <div class="h-80"><canvas id="chart-main"></canvas></div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-sm font-bold text-slate-700 mb-6 uppercase tracking-wider text-center">Estado de Órdenes de Compra</h3>
+                        <div class="h-80"><canvas id="chart-admin"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card p-6">
+                        <h3 class="text-sm font-bold text-slate-700 mb-6 uppercase tracking-wider">Top 5 Servicios por Monto y Cantidad</h3>
+                        <div class="h-64"><canvas id="chart-servicios"></canvas></div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-sm font-bold text-slate-700 mb-6 uppercase tracking-wider">Top 5 Modelos de Máquina</h3>
+                        <div class="h-64"><canvas id="chart-modelos"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalle Page -->
+            <div id="page-detalle" class="hidden space-y-4">
+                <div id="detalle-container" class="space-y-4"></div>
+            </div>
+
+            <!-- Maestro Page -->
+            <div id="page-maestro" class="hidden">
+                <div class="card overflow-hidden">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 border-b uppercase font-bold">
+                                <th class="px-6 py-4">Fabricante</th>
+                                <th class="px-6 py-4">Modelo</th>
+                                <th class="px-6 py-4 text-center cursor-pointer hover:bg-slate-200 transition" onclick="toggleSortMaestro()">
+                                    Unidades <span id="sort-icon">▼</span>
+                                </th>
+                                <th class="px-6 py-4 text-right">Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-maestro-body" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
 
     <script>
-        // --- 1. CONFIGURACIÓN E INICIALIZACIÓN ---
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSO6RWELO8boOz-hzOH0Pb3mYZH3r3I8fWy9DxErOz5W3SWS2AilvndMW6b894hCIvBJyUX4htGMato/pub?gid=816705007&single=true&output=csv';
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSO6RWELO8boOz-hzOH0Pb3mYZH3r3I8fWy9DxErOz5W3SWS2AilvndMW6b894hCIvBJyUX4htGMato/pub?gid=816705007&single=true&output=csv";
         let rawData = [];
-        let dataGlobal = [];
-        let chartInstances = {};
-        const mesesNombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-        const mesesAbrev = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+        let filteredData = [];
+        let charts = {};
+        let sortDesc = true;
 
-        // Limpieza de precios robusta
-        function parseMoney(val) {
-            if (!val) return 0;
-            let s = String(val).replace(/[^\d,\.-]/g, '').trim();
-            if (s.includes('.') && s.includes(',')) {
-                if (s.indexOf('.') < s.indexOf(',')) s = s.replace(/\./g, '').replace(',', '.');
-                else s = s.replace(/,/g, '');
-            } else if (s.includes(',')) s = s.replace(',', '.');
-            return parseFloat(s) || 0;
+        // --- UTILIDADES ---
+        const parseMoney = (val) => {
+            if (!val || val === "") return 0;
+            let clean = val.toString().replace(/[$\s]/g, '').replace(/\./g, '').replace(',', '.');
+            return parseFloat(clean) || 0;
+        };
+
+        const parseDate = (str) => {
+            if (!str) return null;
+            let d, m, y;
+            if (str.includes('-')) {
+                const p = str.split('-'); d = parseInt(p[2]); m = parseInt(p[1]); y = parseInt(p[0]);
+            } else if (str.includes('/')) {
+                const p = str.split('/'); d = parseInt(p[0]); m = parseInt(p[1]); y = parseInt(p[2]);
+            }
+            return { day: d, month: m, year: y, obj: new Date(y, m - 1, d) };
+        };
+
+        function toggleMonthsDropdown() {
+            document.getElementById('filter-months').classList.toggle('show');
+        }
+
+        // Cerrar dropdown si se hace click fuera
+        window.onclick = function(event) {
+            if (!event.target.closest('.relative')) {
+                document.getElementById('filter-months').classList.remove('show');
+            }
         }
 
         async function init() {
-            Papa.parse(`${csvUrl}&ts=${Date.now()}`, {
-                download: true, header: true, skipEmptyLines: true,
-                complete: function(res) {
-                    rawData = res.data;
-                    dataGlobal = processRawData(rawData);
-                    buildFilters();
-                    renderDashboard();
-                    document.getElementById('update-tag').innerHTML = `<i class="fas fa-check-circle mr-1"></i> Sincronizado OK`;
-                    document.getElementById('update-tag').className = "text-[11px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded border border-blue-200";
-                },
-                error: function(err) {
-                    document.getElementById('update-tag').innerHTML = `<i class="fas fa-exclamation-triangle mr-1"></i> Error de conexión`;
-                    document.getElementById('update-tag').className = "text-[11px] text-red-600 font-bold bg-red-50 px-2 py-1 rounded border border-red-200";
-                }
-            });
-
-            // Cerrar dropdowns si clic fuera
-            document.addEventListener('click', function(event) {
-                if (!event.target.closest('.multi-dropdown')) {
-                    document.querySelectorAll('.multi-dropdown-content').forEach(c => c.classList.remove('show'));
-                }
-            });
-        }
-
-        // --- 2. REGLAS DE NEGOCIO (CONDICIONALES EXACTAS) ---
-        function processRawData(rows) {
-            let processed = [];
-            rows.forEach(r => {
-                let coti = (r["# COTI"] || r["COTIZACION"] || "").trim();
-                if (!coti) return; // Fila vacía
-
-                let fecCoti = (r["FECHA COTIZACION"] || r["FECHA COTI"] || r["FECHA"] || "").trim();
-                let fecIni = (r["FECHA INICIO"] || r["FECHA INICIO REAL"] || "").trim();
-                let estTec = (r["ESTADO TÉCNICO"] || r["ESTADO TECNICO"] || "").toUpperCase().trim();
-                let fecOC = (r["FECHA OC"] || "").toUpperCase().trim();
-                let estAdmin = (r["ESTADO ADMIN."] || r["ESTADO ADMINISTRATIVO"] || "").toUpperCase().trim();
-                let factEle = (r["FACT ELE"] || r["# FACT ELE"] || "").trim();
-                let monto = parseMoney(r["PRECIO SERVIC."] || r["PRECIO SERVICIO"]);
-                
-                let responsable = (r["RESPONSABLE"] || "Sin Resp.").trim();
-                let modelo = (r["MODELO"] || "").trim();
-                if (modelo === "" || modelo.toUpperCase() === "NULL") modelo = "OTROS";
-
-                // REGLA: Válida si tiene fecCoti y fecIni, y no es Anulado/Evaluación
-                let isAnulado = estTec.includes("ANULADO") || fecOC.includes("ANULADO");
-                let isEvaluacion = estTec.includes("EVALUAC") || fecOC.includes("EVALUAC");
-                let isValid = (fecCoti !== "" && fecIni !== "") && !isAnulado && !isEvaluacion;
-
-                // REGLA: Clasificación Estatus (Para gráfica de torta y tabla)
-                let estadoCategoria = "PENDIENTE OC";
-                if (isAnulado) estadoCategoria = "ANULADO";
-                else if (isEvaluacion) estadoCategoria = "EVALUACION";
-                else if (factEle !== "" || estAdmin.includes("FACTURAD") || /\d/.test(fecOC) || fecOC.includes("CON OC") || fecOC.includes("REGISTRAD")) {
-                    estadoCategoria = "OC PROCESADA";
-                }
-                else if (fecOC.includes("PROCESO") || estAdmin.includes("PROCESO")) {
-                    estadoCategoria = "EN PROCESO OC";
-                }
-
-                // Parsear Mes/Año de Fecha Coti para agrupar
-                let mesIdx = -1, anio = "";
-                let dateStr = fecCoti || fecIni;
-                if (dateStr.includes('/')) {
-                    let p = dateStr.split('/');
-                    if (p[0].length === 4) { anio = p[0]; mesIdx = parseInt(p[1])-1; }
-                    else { anio = p[2]; mesIdx = parseInt(p[1])-1; }
-                } else if (dateStr.includes('-')) {
-                    let p = dateStr.split('-');
-                    if (p[0].length === 4) { anio = p[0]; mesIdx = parseInt(p[1])-1; }
-                    else { anio = p[2]; mesIdx = parseInt(p[1])-1; }
-                }
-
-                processed.push({
-                    coti, fecCoti, fecIni, estTec, fecOC, estAdmin, monto,
-                    modelo, responsable, serie: (r["SERIE"] || "-").trim(), detalle: (r["DETALLE"] || "Sin Detalle").trim(),
-                    isValid, estadoCategoria, mesIdx, anio
+            try {
+                const resp = await fetch(`${CSV_URL}&t=${Date.now()}`);
+                const text = await resp.text();
+                Papa.parse(text, {
+                    header: true, skipEmptyLines: true,
+                    complete: (results) => {
+                        rawData = results.data;
+                        setupFilters();
+                        processData();
+                    }
                 });
+            } catch (e) { console.error("Error cargando CSV", e); }
+        }
+
+        function setupFilters() {
+            const ySel = document.getElementById('filter-year');
+            const mDiv = document.getElementById('filter-months');
+            if (ySel.options.length > 0) return;
+
+            const years = [...new Set(rawData.map(r => {
+                const d = parseDate(r['FECHA COTIZACION'] || r['FECHA INICIO']);
+                return d ? d.year : null;
+            }))].filter(y => y && y >= 2024).sort((a,b) => b-a);
+
+            years.forEach(y => ySel.add(new Option(`Año ${y}`, y)));
+            ySel.value = "2026";
+
+            const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            mDiv.innerHTML = `<label class="flex items-center space-x-2 p-2 font-bold border-b mb-2"><input type="checkbox" id="all-m" checked onchange="toggleAllMonths(this)"> <span class="text-sm">Seleccionar Todos</span></label>`;
+            meses.forEach((m, i) => {
+                mDiv.innerHTML += `<label class="flex items-center space-x-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer"><input type="checkbox" class="m-check" value="${i+1}" checked onchange="processData()"> <span class="text-xs">${m}</span></label>`;
             });
-            return processed;
         }
 
-        // --- 3. FILTROS MÚLTIPLES ---
-        function buildFilters() {
-            // Extraer solo años y meses que existen en los datos
-            let years = [...new Set(dataGlobal.map(d => d.anio))].filter(y => y && y.length === 4).sort().reverse();
-            let activeMonths = [...new Set(dataGlobal.map(d => d.mesIdx))].filter(m => m >= 0).sort((a,b)=>a-b);
-            let resps = [...new Set(dataGlobal.map(d => d.responsable))].filter(r => r).sort();
-
-            const yList = document.getElementById('list-year');
-            yList.innerHTML = years.map(y => `<label><input type="checkbox" class="filter-cb" value="${y}" checked onchange="checkStatus('list-year', 'all-year', 'label-year', 'Año')"> ${y}</label>`).join('');
-
-            const mList = document.getElementById('list-month');
-            mList.innerHTML = activeMonths.map(i => `<label><input type="checkbox" class="filter-cb" value="${i}" checked onchange="checkStatus('list-month', 'all-month', 'label-month', 'Mes')"> ${mesesNombres[i]}</label>`).join('');
-
-            const rList = document.getElementById('list-resp');
-            rList.innerHTML = resps.map(r => `<label><input type="checkbox" class="filter-cb" value="${r}" checked onchange="checkStatus('list-resp', 'all-resp', 'label-resp', 'Resp.')"> ${r}</label>`).join('');
+        function toggleAllMonths(src) {
+            document.querySelectorAll('.m-check').forEach(c => c.checked = src.checked);
+            processData();
         }
 
-        function toggleDrop(id) {
-            document.querySelectorAll('.multi-dropdown-content').forEach(c => { if(c.id !== id) c.classList.remove('show'); });
-            document.getElementById(id).classList.toggle('show');
+        function processData() {
+            const selY = parseInt(document.getElementById('filter-year').value);
+            const selMs = Array.from(document.querySelectorAll('.m-check:checked')).map(c => parseInt(c.value));
+
+            filteredData = rawData.filter(r => {
+                const d = parseDate(r['FECHA COTIZACION'] || r['FECHA INICIO']);
+                if (!d || d.year !== selY || !selMs.includes(d.month)) return false;
+                const tec = (r['ESTADO TÉCNICO'] || "").toUpperCase();
+                if (tec.includes("ANULADO") || tec.includes("EVALUACION")) return false;
+                return true;
+            });
+
+            updateDashboard();
         }
 
-        function toggleAll(source, listId) {
-            const checkboxes = document.querySelectorAll(`#${listId} input.filter-cb`);
-            checkboxes.forEach(c => c.checked = source.checked);
-            let prefix = listId.split('-')[1];
-            let title = prefix === 'year' ? 'Año' : prefix === 'month' ? 'Mes' : 'Resp.';
-            updateDropLabel(`label-${prefix}`, title, source.checked ? 'Todos' : 'Ninguno');
-            renderDashboard();
+        function updateDashboard() {
+            let totalCot = 0, ocProc = 0, ocEnProc = 0, ocPend = 0;
+            let countProc = 0, countEnProc = 0, countPend = 0;
+
+            filteredData.forEach(r => {
+                const val = parseMoney(r['PRECIO SERVIC.']);
+                const f = (r['FECHA OC'] || "").toUpperCase();
+                totalCot += val;
+
+                if (f.includes("FACTURADO") || /\d{4}/.test(f)) { ocProc += val; countProc++; }
+                else if (f.includes("PROCESO")) { ocEnProc += val; countEnProc++; }
+                else if (f.includes("PENDIENTE")) { ocPend += val; countPend++; }
+            });
+
+            document.getElementById('kpi-qty').innerText = filteredData.length;
+            document.getElementById('kpi-monto-total').innerText = `$ ${totalCot.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+            document.getElementById('kpi-monto-oc').innerText = `$ ${ocProc.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+            document.getElementById('kpi-monto-proceso').innerText = `$ ${ocEnProc.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+            document.getElementById('kpi-monto-pend').innerText = `$ ${ocPend.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+
+            renderMainChart(totalCot, ocProc);
+            renderAdminChart(ocProc, countProc, ocEnProc, countEnProc, ocPend, countPend);
+            renderServiciosChart();
+            renderModelosChart();
+            renderDetalle();
+            renderMaestro();
         }
 
-        function checkStatus(listId, allId, labelId, titlePrefix) {
-            const checkboxes = document.querySelectorAll(`#${listId} input.filter-cb`);
-            const allChecked = Array.from(checkboxes).every(c => c.checked);
-            const countChecked = Array.from(checkboxes).filter(c => c.checked).length;
-            document.getElementById(allId).checked = allChecked;
-            updateDropLabel(labelId, titlePrefix, allChecked ? 'Todos' : (countChecked === 0 ? 'Ninguno' : `(${countChecked})`));
-            renderDashboard();
-        }
-
-        function updateDropLabel(id, prefix, text) { document.getElementById(id).innerText = `${prefix}: ${text}`; }
-        function getCheckedValues(listId) { return Array.from(document.querySelectorAll(`#${listId} input.filter-cb:checked`)).map(c => c.value); }
-
-        // --- 4. RENDER PRINCIPAL ---
-        function renderDashboard() {
-            const selYears = getCheckedValues('list-year');
-            const selMonths = getCheckedValues('list-month').map(v => parseInt(v));
-            const selResps = getCheckedValues('list-resp');
-
-            let filtered = dataGlobal.filter(d => selYears.includes(d.anio) && selMonths.includes(d.mesIdx) && selResps.includes(d.responsable));
-
-            // Variables KPIs (Solo válidos)
-            let kpiCount = 0, kpiCotizaciones = 0, kpiOcProcesada = 0, kpiOcProceso = 0, kpiOcPendiente = 0;
+        // --- GRÁFICOS ---
+        function renderMainChart(totalYear, totalProcYear) {
+            if (charts.main) charts.main.destroy();
             
-            // Gráficos y Tablas
-            let distAdmin = { "OC PROCESADA": 0, "EN PROCESO OC": 0, "PENDIENTE OC": 0, "EVALUACION": 0, "ANULADO": 0 };
-            let topServicios = {}, countModelos = {}, monthEvol = {}, monthTableData = {};
-
-            filtered.forEach(d => {
-                // Distribución Admin SIEMPRE cuenta todo para mostrar la torta completa
-                if (distAdmin[d.estadoCategoria] !== undefined) distAdmin[d.estadoCategoria] += d.monto;
-
-                // El resto de indicadores / tablas SOLO validos
-                if (d.isValid) {
-                    kpiCount++;
-                    kpiCotizaciones += d.monto;
-
-                    if (d.estadoCategoria === "OC PROCESADA") kpiOcProcesada += d.monto;
-                    else if (d.estadoCategoria === "EN PROCESO OC") kpiOcProceso += d.monto;
-                    else if (d.estadoCategoria === "PENDIENTE OC") kpiOcPendiente += d.monto;
-
-                    // Agrupaciones 
-                    topServicios[d.detalle] = topServicios[d.detalle] || { monto: 0, count: 0 };
-                    topServicios[d.detalle].monto += d.monto;
-                    topServicios[d.detalle].count += 1;
-
-                    countModelos[d.modelo] = (countModelos[d.modelo] || 0) + 1;
-
-                    // Evolución
-                    let mKey = `${d.anio}-${d.mesIdx}`;
-                    if (!monthEvol[mKey]) monthEvol[mKey] = { anio: d.anio, mesIdx: d.mesIdx, coti: 0, ocProc: 0 };
-                    monthEvol[mKey].coti += d.monto;
-                    if (d.estadoCategoria === "OC PROCESADA") monthEvol[mKey].ocProc += d.monto;
-                }
-
-                // Tabla incluye todo para auditoría, opcionalmente podrías filtrar isValid, pero dejaremos todo.
-                let tKey = `${d.anio}-${d.mesIdx}`;
-                if (!monthTableData[tKey]) monthTableData[tKey] = { name: `${mesesNombres[d.mesIdx]} ${d.anio}`, sort: parseInt(`${d.anio}${d.mesIdx.toString().padStart(2,'0')}`), items: [] };
-                monthTableData[tKey].items.push(d);
-            });
-
-            // Set KPIs
-            const fmt = (n) => n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-            document.getElementById('kpi-qty').innerText = kpiCount;
-            document.getElementById('kpi-monto-total').innerText = fmt(kpiCotizaciones);
-            document.getElementById('kpi-monto-oc').innerText = fmt(kpiOcProcesada);
-            document.getElementById('kpi-monto-proc').innerText = fmt(kpiOcProceso);
-            document.getElementById('kpi-monto-pend').innerText = fmt(kpiOcPendiente);
-
-            // Render Gráficos y Tablas
-            renderChartMain(monthEvol);
-            renderChartAdmin(distAdmin);
-            renderChartServicios(topServicios);
-            renderChartModelos(countModelos);
-            renderTableDetalle(monthTableData);
-            renderTableMaestro(countModelos);
-        }
-
-        // --- 5. GRÁFICOS ---
-        function renderChartMain(monthEvol) {
-            let sortedKeys = Object.keys(monthEvol).sort((a,b) => {
-                if(monthEvol[a].anio === monthEvol[b].anio) return monthEvol[a].mesIdx - monthEvol[b].mesIdx;
-                return monthEvol[a].anio.localeCompare(monthEvol[b].anio);
-            });
-
-            let labels = [], dataCoti = [], dataOcProc = [], dataGrowthOC = [];
-            let prevOcProc = 0;
-
-            sortedKeys.forEach((k, i) => {
-                let m = monthEvol[k];
-                labels.push(`${mesesAbrev[m.mesIdx]} ${m.anio}`);
-                dataCoti.push(m.coti);
-                dataOcProc.push(m.ocProc);
+            const mNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+            const monthly = {};
+            
+            // Agrupar datos y encontrar último día operativo por mes
+            filteredData.forEach(r => {
+                const d = parseDate(r['FECHA COTIZACION'] || r['FECHA INICIO']);
+                if (!monthly[d.month]) monthly[d.month] = { cot: 0, proc: 0, lastDay: 0 };
+                const mVal = parseMoney(r['PRECIO SERVIC.']);
+                monthly[d.month].cot += mVal;
+                if (d.day > monthly[d.month].lastDay) monthly[d.month].lastDay = d.day;
                 
-                let growth = 0;
-                if (i > 0 && prevOcProc > 0) growth = ((m.ocProc - prevOcProc) / prevOcProc) * 100;
-                dataGrowthOC.push(growth.toFixed(1));
-                prevOcProc = m.ocProc;
+                const f = (r['FECHA OC'] || "").toUpperCase();
+                if (f.includes("FACTURADO") || /\d{4}/.test(f)) monthly[d.month].proc += mVal;
             });
 
-            const ctx = document.getElementById('chartMain').getContext('2d');
-            if (chartInstances.main) chartInstances.main.destroy();
-            chartInstances.main = new Chart(ctx, {
+            const sortedMs = Object.keys(monthly).sort((a,b) => a-b);
+            const labels = sortedMs.map(m => mNames[m-1]);
+
+            // Cálculo de crecimiento normalizado
+            let growthHTML = "";
+            let currentGrowth = "0%";
+            if (sortedMs.length >= 1) {
+                const lastIdx = sortedMs.length - 1;
+                const currM = sortedMs[lastIdx];
+                const prevM = sortedMs[lastIdx - 1];
+
+                if (prevM) {
+                    const avgCurr = monthly[currM].cot / monthly[currM].lastDay;
+                    const avgPrev = monthly[prevM].cot / monthly[prevM].lastDay;
+                    const growthVal = ((avgCurr - avgPrev) / avgPrev) * 100;
+                    currentGrowth = growthVal.toFixed(1) + "%";
+                    const color = growthVal >= 0 ? 'growth-positive' : 'growth-negative';
+                    growthHTML = `<div class="text-[10px] font-bold uppercase text-slate-400">Crecimiento (Prom. Diario)</div>
+                                  <div class="text-xl font-black ${color}">${growthVal >= 0 ? '+' : ''}${currentGrowth}</div>`;
+                }
+            }
+            document.getElementById('growth-summary').innerHTML = growthHTML;
+
+            charts.main = new Chart(document.getElementById('chart-main'), {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels,
                     datasets: [
-                        { label: 'Cotizaciones', data: dataCoti, backgroundColor: '#00508F', borderRadius: 4, order: 2 },
-                        { label: 'OC Procesada', data: dataOcProc, backgroundColor: '#10b981', borderRadius: 4, order: 3 },
-                        { label: 'Crecimiento OC %', data: dataGrowthOC, type: 'line', borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 2, pointRadius: 4, yAxisID: 'yPerc', order: 1 }
+                        { 
+                            label: 'Cotizado ($)', 
+                            data: sortedMs.map(m => monthly[m].cot), 
+                            backgroundColor: '#0f172a',
+                            datalabels: { align: 'end', anchor: 'end' } 
+                        },
+                        { 
+                            label: 'Procesado ($)', 
+                            data: sortedMs.map(m => monthly[m].proc), 
+                            backgroundColor: '#10b981' 
+                        }
                     ]
                 },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true }, yPerc: { position: 'right', grid: { display: false }, ticks: { callback: v => v + '%' } } },
+                options: { 
+                    maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'bottom', labels: {boxWidth: 10} },
                         tooltip: {
                             callbacks: {
-                                label: (ctx) => {
-                                    if(ctx.dataset.label.includes('%')) return `${ctx.dataset.label}: ${ctx.raw}%`;
-                                    let baseLabel = `${ctx.dataset.label}: $ ${ctx.raw.toLocaleString('en-US', {minimumFractionDigits:2})}`;
-                                    if(ctx.dataset.label === 'OC Procesada') {
-                                        let ratio = dataCoti[ctx.dataIndex] > 0 ? ((ctx.raw / dataCoti[ctx.dataIndex]) * 100).toFixed(1) : 0;
-                                        return [baseLabel, `Repres. vs Cotización: ${ratio}%`];
-                                    }
-                                    return baseLabel;
+                                footer: (items) => {
+                                    const mIndex = sortedMs[items[0].dataIndex];
+                                    const perc = ((monthly[mIndex].proc / monthly[mIndex].cot) * 100).toFixed(1);
+                                    return `Avance OC: ${perc}%`;
                                 }
                             }
+                        }
+                    },
+                    scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString() } } }
+                }
+            });
+        }
+
+        function renderAdminChart(p, cp, e, ce, n, cn) {
+            if (charts.admin) charts.admin.destroy();
+            charts.admin = new Chart(document.getElementById('chart-admin'), {
+                type: 'doughnut',
+                data: {
+                    labels: [`Procesada (${cp})`, `En Proceso (${ce})`, `Pendiente (${cn})`],
+                    datasets: [{ 
+                        data: [p, e, n], 
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { 
+                    maintainAspectRatio: false, 
+                    cutout: '70%',
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11, weight: 'bold' } } } 
+                    }
+                }
+            });
+        }
+
+        function renderServiciosChart() {
+            if (charts.servs) charts.servs.destroy();
+            const servs = {};
+            filteredData.forEach(r => {
+                const s = (r['DETALLE'] || "OTROS").trim().toUpperCase();
+                if (!servs[s]) servs[s] = { m: 0, c: 0 };
+                servs[s].m += parseMoney(r['PRECIO SERVIC.']);
+                servs[s].c += 1;
+            });
+            const top5 = Object.entries(servs).sort((a,b) => b[1].m - a[1].m).slice(0, 5);
+
+            charts.servs = new Chart(document.getElementById('chart-servicios'), {
+                type: 'bar',
+                data: {
+                    labels: top5.map(x => x[0].substring(0, 20) + '...'),
+                    datasets: [{ 
+                        label: 'Monto Total ($)', 
+                        data: top5.map(x => x[1].m), 
+                        backgroundColor: '#00508F' 
+                    }]
+                },
+                options: { 
+                    indexAxis: 'y',
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: { afterLabel: (i) => `Cantidad: ${top5[i.dataIndex][1].c} unidades` }
                         }
                     }
                 }
             });
         }
 
-        function renderChartAdmin(dist) {
-            const ctx = document.getElementById('chartAdmin').getContext('2d');
-            if (chartInstances.admin) chartInstances.admin.destroy();
-            chartInstances.admin = new Chart(ctx, {
-                type: 'doughnut',
+        function renderModelosChart() {
+            if (charts.mods) charts.mods.destroy();
+            const mods = {};
+            filteredData.forEach(r => {
+                const m = (r['MODELO'] || "OTROS").trim().toUpperCase();
+                if (!mods[m]) mods[m] = { c: 0, m: 0 };
+                mods[m].c += 1;
+                mods[m].m += parseMoney(r['PRECIO SERVIC.']);
+            });
+            const top5 = Object.entries(mods).sort((a,b) => b[1].c - a[1].c).slice(0, 5);
+
+            charts.mods = new Chart(document.getElementById('chart-modelos'), {
+                type: 'bar',
                 data: {
-                    labels: Object.keys(dist),
-                    datasets: [{ data: Object.values(dist), backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#a855f7', '#ef4444'], borderWidth: 0 }]
+                    labels: top5.map(x => x[0]),
+                    datasets: [{ 
+                        label: 'Unidades', 
+                        data: top5.map(x => x[1].c), 
+                        backgroundColor: '#334155' 
+                    }]
                 },
-                options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '65%',
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font:{size: 10} } }, tooltip: { callbacks: { label: (ctx) => ` $ ${ctx.raw.toLocaleString('en-US', {minimumFractionDigits:2})}` } } }
+                options: { 
+                    indexAxis: 'y',
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: { afterLabel: (i) => `Monto Total: $${top5[i.dataIndex][1].m.toLocaleString()}` }
+                        }
+                    }
                 }
             });
         }
 
-        function renderChartServicios(topS) {
-            const sorted = Object.entries(topS).sort((a,b) => b[1].monto - a[1].monto).slice(0, 5);
-            const ctx = document.getElementById('chartServicios').getContext('2d');
-            if (chartInstances.serv) chartInstances.serv.destroy();
-            chartInstances.serv = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: sorted.map(x => x[0].length > 25 ? x[0].substring(0,25)+'...' : x[0]),
-                    datasets: [{ label: 'Acumulado ($)', data: sorted.map(x => x[1].monto), backgroundColor: '#3b82f6', borderRadius: 4 }]
-                },
-                options: {
-                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `Monto: $ ${ctx.raw.toLocaleString('en-US', {minimumFractionDigits:2})}`, afterLabel: (ctx) => `Cantidad: ${sorted[ctx.dataIndex][1].count}` }} }
-                }
-            });
-        }
-
-        function renderChartModelos(modelos) {
-            const sorted = Object.entries(modelos).sort((a,b) => b[1] - a[1]);
-            const ctx = document.getElementById('chartModelos').getContext('2d');
-            if (chartInstances.machine) chartInstances.machine.destroy();
-            chartInstances.machine = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: sorted.map(x => x[0]), datasets: [{ label: 'Cantidad', data: sorted.map(x => x[1]), backgroundColor: '#00508F', borderRadius: 4 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { precision: 0 } } } }
-            });
-        }
-
-        // --- 6. ACORDEÓN TABLA DETALLE ---
-        window.toggleRows = function(k) {
-            const icon = document.getElementById('icon-' + k);
-            const rows = document.querySelectorAll('.row-' + k);
-            let isHidden = false;
-            rows.forEach(r => { r.classList.toggle('hidden'); isHidden = r.classList.contains('hidden'); });
-            if (isHidden) { icon.classList.remove('open'); icon.innerText = '►'; } 
-            else { icon.classList.add('open'); icon.innerText = '▼'; }
-        }
-
-        function renderTableDetalle(groupedData) {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            let sortedKeys = Object.keys(groupedData).sort((a,b) => groupedData[b].sort - groupedData[a].sort);
-
-            sortedKeys.forEach(k => {
-                const g = groupedData[k];
-                tbody.insertAdjacentHTML('beforeend', `<tr class="month-header" onclick="toggleRows('${k}')">
-                    <td colspan="10"><span class="toggle-icon" id="icon-${k}">►</span> <strong style="color: #00508F;">${g.name}</strong> <span style="color:#64748b; font-size:0.8rem">(${g.items.length} registros)</span></td>
-                </tr>`);
-
-                g.items.forEach(i => {
-                    let pillClass = "";
-                    if (i.estadoCategoria === "OC PROCESADA") pillClass = "bg-oc-proc";
-                    else if (i.estadoCategoria === "EN PROCESO OC") pillClass = "bg-oc-proceso";
-                    else if (i.estadoCategoria === "PENDIENTE OC") pillClass = "bg-oc-pend";
-                    else if (i.estadoCategoria === "ANULADO") pillClass = "bg-anulado";
-                    else if (i.estadoCategoria === "EVALUACION") pillClass = "bg-eval";
-
-                    let opacity = (!i.isValid) ? 'opacity: 0.5;' : '';
-
-                    tbody.insertAdjacentHTML('beforeend', `<tr class="data-row row-${k} hidden" style="${opacity}">
-                        <td style="padding-left:20px;"><strong>${i.coti}</strong></td>
-                        <td>${i.fecIni}</td>
-                        <td>${i.modelo}</td>
-                        <td><span class="serie-id">${i.serie}</span></td> 
-                        <td>${i.detalle.substring(0,35)}</td>
-                        <td>${i.estTec}</td>
-                        <td>${i.fecOC}</td>
-                        <td>${i.estAdmin}</td>
-                        <td><span class="status-pill ${pillClass}">${i.estadoCategoria}</span></td>
-                        <td style="text-align:right; font-weight:bold;">${i.monto.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
-                    </tr>`);
-                });
-            });
-        }
-
-        // --- 7. MAESTRO MÁQUINAS ---
-        function renderTableMaestro(countModelos) {
-            const tbody = document.getElementById('maestroBody');
-            tbody.innerHTML = '';
-            const sorted = Object.entries(countModelos).sort((a,b) => b[1] - a[1]);
+        // --- PÁGINAS ---
+        function renderDetalle() {
+            const container = document.getElementById('detalle-container');
+            const mNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            const grouped = {};
             
-            sorted.forEach(([modelo, count]) => {
-                tbody.insertAdjacentHTML('beforeend', `<tr class="data-row">
-                    <td class="font-bold text-slate-700">VOLVO</td>
-                    <td class="font-semibold text-blue-600">${modelo}</td>
-                    <td style="text-align:center;">${count}</td>
-                </tr>`);
-            });
-        }
-
-        // --- 8. CONTROL UI ---
-        window.switchProject = function(proj) {
-            document.getElementById('workspace-elefante').classList.add('hidden');
-            document.getElementById('workspace-nuevo').classList.add('hidden');
-            document.getElementById('workspace-' + proj).classList.remove('hidden');
-
-            document.getElementById('proj-elefante').className = `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${proj==='elefante' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`;
-            document.getElementById('proj-nuevo').className = `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${proj==='nuevo' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`;
-
-            document.getElementById('menu-elefante').classList.toggle('hidden', proj !== 'elefante');
-        }
-
-        window.switchTab = function(tab) {
-            ['dashboard', 'detalle', 'maestro'].forEach(t => {
-                document.getElementById('view-' + t).classList.add('hidden');
-                let btn = document.getElementById('tab-' + t);
-                btn.classList.remove('bg-slate-800', 'text-blue-400', 'font-medium');
-                btn.classList.add('text-slate-400');
-                document.getElementById('chev-' + t)?.classList.add('hidden');
+            filteredData.forEach(r => {
+                const d = parseDate(r['FECHA COTIZACION'] || r['FECHA INICIO']);
+                if (!grouped[d.month]) grouped[d.month] = [];
+                grouped[d.month].push(r);
             });
 
-            document.getElementById('view-' + tab).classList.remove('hidden');
-            let activeBtn = document.getElementById('tab-' + tab);
-            activeBtn.classList.remove('text-slate-400');
-            activeBtn.classList.add('bg-slate-800', 'text-blue-400', 'font-medium');
-            document.getElementById('chev-' + tab)?.classList.remove('hidden');
+            container.innerHTML = Object.keys(grouped).sort((a,b) => b-a).map(m => {
+                const rows = grouped[m];
+                const totalM = rows.reduce((acc, x) => acc + parseMoney(x['PRECIO SERVIC.']), 0);
+                return `
+                    <div class="card overflow-hidden">
+                        <div class="p-4 bg-slate-800 text-white flex justify-between items-center cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                            <span class="font-bold text-sm uppercase">${mNames[m-1]} (${rows.length} Cotizaciones)</span>
+                            <div class="flex items-center space-x-4">
+                                <span class="text-xs opacity-80">Subtotal Mes: $${totalM.toLocaleString('en-US', {minimumFractionDigits:2})}</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto border-t">
+                            <table class="w-full text-[10px]">
+                                <thead class="bg-slate-50 border-b text-slate-500 uppercase">
+                                    <tr>
+                                        <th class="p-3">COTI</th>
+                                        <th class="p-3">MODELO</th>
+                                        <th class="p-3">SERIE</th>
+                                        <th class="p-3">SERVICIO</th>
+                                        <th class="p-3">ESTADO TÉC</th>
+                                        <th class="p-3">FECHA OC</th>
+                                        <th class="p-3 text-right">MONTO</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rows.map(r => {
+                                        const isDate = /\d{2,4}/.test(r['FECHA OC']);
+                                        const dateClass = isDate ? 'date-active' : '';
+                                        return `
+                                            <tr class="border-b hover:bg-slate-50 transition">
+                                                <td class="p-3 font-bold text-blue-900">${r['# COTI']}</td>
+                                                <td class="p-3 font-bold">${r['MODELO']}</td>
+                                                <td class="p-3">${r['SERIE']}</td>
+                                                <td class="p-3 text-slate-600">${r['DETALLE']}</td>
+                                                <td class="p-3"><span class="status-pill ${r['ESTADO TÉCNICO'].includes('Terminado')?'bg-terminado':'bg-proceso'}">${r['ESTADO TÉCNICO']}</span></td>
+                                                <td class="p-3"><span class="${dateClass}">${r['FECHA OC']}</span></td>
+                                                <td class="p-3 text-right font-black text-slate-700">${r['PRECIO SERVIC.']}</td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        window.exportPDF = function() {
-            // Forzar vista dashboard
-            switchTab('dashboard');
-            const element = document.getElementById('workspace-elefante');
-            const opt = { margin: 0.3, filename: 'Dashboard_Elefante.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' } };
-            html2pdf().set(opt).from(element).save();
+        function renderMaestro() {
+            const body = document.getElementById('table-maestro-body');
+            const map = {};
+            filteredData.forEach(r => {
+                const m = (r['MODELO'] || "OTROS").trim().toUpperCase();
+                if (!map[m]) map[m] = [];
+                map[m].push(r['SERIE'] || "S/S");
+            });
+
+            const sorted = Object.entries(map).sort((a,b) => sortDesc ? b[1].length - a[1].length : a[1].length - b[1].length);
+
+            body.innerHTML = sorted.map(([mod, series], idx) => `
+                <tr class="master-row" onclick="toggleSeries(${idx})">
+                    <td class="px-6 py-4 font-bold text-blue-900">VOLVO</td>
+                    <td class="px-6 py-4 font-bold">${mod}</td>
+                    <td class="px-6 py-4 text-center font-black text-blue-600 text-sm">${series.length}</td>
+                    <td class="px-6 py-4 text-right">
+                        <span class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-bold">Ver Series ▼</span>
+                    </td>
+                </tr>
+                <tr id="series-${idx}" class="series-list">
+                    <td colspan="4" class="px-10 py-4 italic text-slate-500 bg-slate-50 border-b">
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                            ${[...new Set(series)].map(s => `<span class="bg-white p-1.5 rounded shadow-sm text-center border border-slate-100 text-[10px]"># ${s}</span>`).join('')}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
         }
 
-        // Arrancar app
+        function toggleSortMaestro() {
+            sortDesc = !sortDesc;
+            document.getElementById('sort-icon').innerText = sortDesc ? '▼' : '▲';
+            renderMaestro();
+        }
+
+        function toggleSeries(idx) {
+            document.getElementById(`series-${idx}`).classList.toggle('active');
+        }
+
+        function showPage(id, btn) {
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            btn.classList.add('active');
+            ['resumen', 'detalle', 'maestro'].forEach(p => document.getElementById('page-' + p).classList.add('hidden'));
+            document.getElementById('page-' + id).classList.remove('hidden');
+        }
+
         window.onload = init;
     </script>
 </body>
