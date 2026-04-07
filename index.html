@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elefante S.A.C. - Dashboard Operativo</title>
+    <title>Dashboard Operativo</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
@@ -25,7 +24,6 @@
         .bg-terminado { background: #dcfce7; color: #166534; }
         .bg-proceso { background: #fef3c7; color: #92400e; }
         
-        /* Dropdown Corregido (Click en lugar de Hover) */
         .dropdown-content { 
             display: none; position: absolute; background: white; min-width: 200px; 
             box-shadow: 0 8px 16px rgba(0,0,0,0.1); z-index: 100; border-radius: 8px; 
@@ -33,141 +31,132 @@
         }
         .dropdown-content.show { display: block; }
         
-        /* Maestro Máquina */
         .master-row { cursor: pointer; transition: background 0.2s; }
         .master-row:hover { background: #f1f5f9; }
         .series-list { background: #f8fafc; display: none; }
         .series-list.active { display: table-row; }
 
-        .growth-positive { color: #10b981; }
-        .growth-negative { color: #ef4444; }
-
-        /* Estilo para Fecha OC con datos */
         .date-active { background: #dbeafe; color: #1e40af; font-weight: 700; border-radius: 4px; padding: 2px 4px; }
     </style>
 </head>
-<body class="flex min-h-screen">
+<body class="flex h-screen overflow-hidden relative">
 
-    <aside class="sidebar text-white hidden md:flex flex-col p-6 shrink-0">
+    <aside class="sidebar text-white hidden md:flex flex-col p-6 shrink-0 h-full">
         <div class="flex items-center space-x-3 mb-10">
             <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl font-mono">E</div>
             <div>
                 <h1 class="text-lg font-bold leading-tight">ELEFANTE</h1>
-                <p class="text-[10px] text-blue-400 tracking-widest uppercase">Servicios SAC</p>
+                <p class="text-[10px] text-blue-400 tracking-widest uppercase">Servicios</p>
             </div>
         </div>
         <nav class="flex-1 space-y-1">
-            <div onclick="showPage('resumen', this)" class="sidebar-item active p-3 rounded-lg flex items-center space-x-3">
+            <div onclick="showPage('resumen')" data-target="resumen" class="sidebar-item active p-3 rounded-lg flex items-center space-x-3">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"></path></svg>
                 <span>Resumen</span>
             </div>
-            <div onclick="showPage('detalle', this)" class="sidebar-item p-3 rounded-lg flex items-center space-x-3">
+            <div onclick="showPage('detalle')" data-target="detalle" class="sidebar-item p-3 rounded-lg flex items-center space-x-3">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                 <span>Detalle Cotizaciones</span>
             </div>
-            <div onclick="showPage('maestro', this)" class="sidebar-item p-3 rounded-lg flex items-center space-x-3">
+            <div onclick="showPage('maestro')" data-target="maestro" class="sidebar-item p-3 rounded-lg flex items-center space-x-3">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                <span>Maestro Máquinas</span>
+                <span>Historial de Máquinas</span>
             </div>
         </nav>
-        <div class="mt-auto pt-6 border-t border-slate-700">
-            <button onclick="window.print()" class="w-full bg-blue-600 hover:bg-blue-700 p-2.5 rounded-lg text-xs font-bold uppercase">Exportar Reporte</button>
-        </div>
     </aside>
 
-    <main class="flex-1 flex flex-col min-w-0">
-        <header class="h-20 bg-white border-b flex items-center justify-between px-8 shrink-0">
+    <main class="flex-1 flex flex-col min-w-0 h-full relative">
+        
+        <header class="h-16 md:h-20 bg-white border-b flex items-center justify-between px-4 md:px-8 shrink-0">
             <div>
-                <h2 id="view-title" class="text-slate-800 font-bold text-lg">Panel de Control Operativo</h2>
-                <p id="last-update" class="text-[11px] text-slate-500 italic">Sincronizando datos...</p>
+                <h2 id="view-title" class="font-bold text-sm md:text-lg text-blue-900 truncate">Panel de Control Operativo</h2>
             </div>
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2 md:space-x-4">
+                <div class="flex items-center bg-slate-50 p-1 rounded-lg border border-slate-200">
+                    <span class="text-[9px] md:text-[10px] font-bold text-slate-400 px-1 md:px-2">AÑO:</span>
+                    <select id="filter-year" onchange="processData()" class="bg-transparent px-1 md:px-2 py-1.5 rounded text-xs font-bold outline-none"></select>
+                </div>
                 <div class="relative">
-                    <button onclick="toggleMonthsDropdown()" class="bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2">
-                        <span>Filtro de Meses</span>
+                    <button onclick="toggleMonthsDropdown()" class="bg-blue-600 text-white px-2 md:px-4 py-1.5 md:py-2 rounded-lg text-xs font-bold flex items-center space-x-1 md:space-x-2">
+                        <span class="hidden md:inline">Filtrar Meses</span>
+                        <span class="md:hidden">Meses</span>
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
                     </button>
-                    <div id="filter-months" class="dropdown-content mt-2 p-4"></div>
+                    <div id="filter-months" class="dropdown-content mt-2 p-4 right-0 w-48 md:w-auto"></div>
                 </div>
-                <select id="filter-year" onchange="processData()" class="bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg text-xs font-semibold outline-none"></select>
             </div>
         </header>
 
-        <div id="content-scroll" class="p-8 overflow-y-auto flex-1 space-y-8">
-            <!-- KPIs -->
+        <div id="content-scroll" class="p-4 md:p-8 pb-24 md:pb-8 overflow-y-auto flex-1 space-y-6 md:space-y-8">
             <div id="page-resumen" class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <div class="card p-5 border-l-4 border-blue-600">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nro Cotizaciones</span>
-                        <div id="kpi-qty" class="text-2xl font-black text-slate-800 mt-1">0</div>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+                    <div class="card p-4 md:p-5 border-l-4 border-blue-600 col-span-2 md:col-span-1">
+                        <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nro Cotizaciones</span>
+                        <div id="kpi-qty" class="text-xl md:text-2xl font-black text-slate-800 mt-1">0</div>
                     </div>
-                    <div class="card p-5 border-l-4 border-slate-800">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Cotizado ($)</span>
-                        <div id="kpi-monto-total" class="text-2xl font-black text-slate-800 mt-1">$ 0.00</div>
+                    <div class="card p-4 md:p-5 border-l-4 border-slate-800">
+                        <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Cotizado ($)</span>
+                        <div id="kpi-monto-total" class="text-lg md:text-2xl font-black text-slate-800 mt-1">$ 0</div>
                     </div>
-                    <div class="card p-5 border-l-4 border-emerald-500">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">OC Procesada</span>
-                        <div id="kpi-monto-oc" class="text-2xl font-black text-emerald-600 mt-1">$ 0.00</div>
+                    <div class="card p-4 md:p-5 border-l-4 border-emerald-500">
+                        <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">OC Procesada</span>
+                        <div id="kpi-monto-oc" class="text-lg md:text-2xl font-black text-emerald-600 mt-1">$ 0</div>
                     </div>
-                    <div class="card p-5 border-l-4 border-amber-500">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">OC en Proceso</span>
-                        <div id="kpi-monto-proceso" class="text-2xl font-black text-amber-600 mt-1">$ 0.00</div>
+                    <div class="card p-4 md:p-5 border-l-4 border-amber-500">
+                        <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">OC en Proceso</span>
+                        <div id="kpi-monto-proceso" class="text-lg md:text-2xl font-black text-amber-600 mt-1">$ 0</div>
                     </div>
-                    <div class="card p-5 border-l-4 border-rose-500">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">OC Pendiente</span>
-                        <div id="kpi-monto-pend" class="text-2xl font-black text-rose-600 mt-1">$ 0.00</div>
+                    <div class="card p-4 md:p-5 border-l-4 border-rose-500">
+                        <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">OC Pendiente</span>
+                        <div id="kpi-monto-pend" class="text-lg md:text-2xl font-black text-rose-600 mt-1">$ 0</div>
                     </div>
                 </div>
 
-                <!-- Gráficos Principales -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="card p-6">
-                        <div class="flex justify-between items-start mb-6">
+                    <div class="card p-4 md:p-6">
+                        <div class="mb-4 md:mb-6 flex justify-between items-start">
                             <div>
-                                <h3 class="text-sm font-bold text-slate-700">Cotizaciones vs OC Procesada</h3>
-                                <p class="text-[10px] text-slate-500 italic mt-1">Comparativa de avance y crecimiento normalizado por días</p>
-                            </div>
-                            <div id="growth-summary" class="text-right">
-                                <!-- Se llena dinámicamente -->
+                                <h3 class="text-xs md:text-sm font-bold text-slate-700 uppercase">Progresión de Venta & Crecimiento %</h3>
+                                <p class="text-[9px] md:text-[10px] text-slate-500 italic mt-1">Basado en promedio diario vs mes anterior</p>
                             </div>
                         </div>
-                        <div class="h-80"><canvas id="chart-main"></canvas></div>
+                        <div class="h-64 md:h-80 relative">
+                            <canvas id="chart-main"></canvas>
+                        </div>
                     </div>
-                    <div class="card p-6">
-                        <h3 class="text-sm font-bold text-slate-700 mb-6 uppercase tracking-wider text-center">Estado de Órdenes de Compra</h3>
-                        <div class="h-80"><canvas id="chart-admin"></canvas></div>
+                    <div class="card p-4 md:p-6">
+                        <h3 class="text-xs md:text-sm font-bold text-slate-700 mb-4 md:mb-6 uppercase tracking-wider text-center">Estado Administrativo General</h3>
+                        <div class="h-64 md:h-80"><canvas id="chart-admin"></canvas></div>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="card p-6">
-                        <h3 class="text-sm font-bold text-slate-700 mb-6 uppercase tracking-wider">Top 5 Servicios por Monto y Cantidad</h3>
+                    <div class="card p-4 md:p-6">
+                        <h3 class="text-xs md:text-sm font-bold text-slate-700 mb-4 md:mb-6 uppercase tracking-wider">Top 5 Servicios</h3>
                         <div class="h-64"><canvas id="chart-servicios"></canvas></div>
                     </div>
-                    <div class="card p-6">
-                        <h3 class="text-sm font-bold text-slate-700 mb-6 uppercase tracking-wider">Top 5 Modelos de Máquina</h3>
+                    <div class="card p-4 md:p-6">
+                        <h3 class="text-xs md:text-sm font-bold text-slate-700 mb-4 md:mb-6 uppercase tracking-wider">Top 5 Modelos de Máquina</h3>
                         <div class="h-64"><canvas id="chart-modelos"></canvas></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Detalle Page -->
             <div id="page-detalle" class="hidden space-y-4">
                 <div id="detalle-container" class="space-y-4"></div>
             </div>
 
-            <!-- Maestro Page -->
             <div id="page-maestro" class="hidden">
-                <div class="card overflow-hidden">
-                    <table class="w-full text-left text-xs">
+                <div class="card overflow-x-auto">
+                    <table class="w-full text-left text-xs min-w-[500px]">
                         <thead>
                             <tr class="bg-slate-100 text-slate-600 border-b uppercase font-bold">
-                                <th class="px-6 py-4">Fabricante</th>
-                                <th class="px-6 py-4">Modelo</th>
-                                <th class="px-6 py-4 text-center cursor-pointer hover:bg-slate-200 transition" onclick="toggleSortMaestro()">
+                                <th class="px-4 md:px-6 py-4">Fabricante</th>
+                                <th class="px-4 md:px-6 py-4">Modelo</th>
+                                <th class="px-4 md:px-6 py-4 text-center cursor-pointer hover:bg-slate-200 transition" onclick="toggleSortMaestro()">
                                     Unidades <span id="sort-icon">▼</span>
                                 </th>
-                                <th class="px-6 py-4 text-right">Detalle</th>
+                                <th class="px-4 md:px-6 py-4 text-right">Acción</th>
                             </tr>
                         </thead>
                         <tbody id="table-maestro-body" class="divide-y divide-slate-100"></tbody>
@@ -175,6 +164,21 @@
                 </div>
             </div>
         </div>
+
+        <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white border-t flex justify-around items-center h-16 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+            <div onclick="showPage('resumen')" data-target="resumen" class="mobile-nav-item text-blue-600 flex flex-col items-center justify-center w-full h-full cursor-pointer">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                <span class="text-[10px] font-bold mt-1">Resumen</span>
+            </div>
+            <div onclick="showPage('detalle')" data-target="detalle" class="mobile-nav-item text-slate-400 hover:text-blue-500 flex flex-col items-center justify-center w-full h-full cursor-pointer transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                <span class="text-[10px] font-bold mt-1">Detalle</span>
+            </div>
+            <div onclick="showPage('maestro')" data-target="maestro" class="mobile-nav-item text-slate-400 hover:text-blue-500 flex flex-col items-center justify-center w-full h-full cursor-pointer transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                <span class="text-[10px] font-bold mt-1">Maestro</span>
+            </div>
+        </nav>
     </main>
 
     <script>
@@ -184,7 +188,6 @@
         let charts = {};
         let sortDesc = true;
 
-        // --- UTILIDADES ---
         const parseMoney = (val) => {
             if (!val || val === "") return 0;
             let clean = val.toString().replace(/[$\s]/g, '').replace(/\./g, '').replace(',', '.');
@@ -206,7 +209,6 @@
             document.getElementById('filter-months').classList.toggle('show');
         }
 
-        // Cerrar dropdown si se hace click fuera
         window.onclick = function(event) {
             if (!event.target.closest('.relative')) {
                 document.getElementById('filter-months').classList.remove('show');
@@ -238,13 +240,13 @@
                 return d ? d.year : null;
             }))].filter(y => y && y >= 2024).sort((a,b) => b-a);
 
-            years.forEach(y => ySel.add(new Option(`Año ${y}`, y)));
+            years.forEach(y => ySel.add(new Option(y, y)));
             ySel.value = "2026";
 
             const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
             mDiv.innerHTML = `<label class="flex items-center space-x-2 p-2 font-bold border-b mb-2"><input type="checkbox" id="all-m" checked onchange="toggleAllMonths(this)"> <span class="text-sm">Seleccionar Todos</span></label>`;
             meses.forEach((m, i) => {
-                mDiv.innerHTML += `<label class="flex items-center space-x-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer"><input type="checkbox" class="m-check" value="${i+1}" checked onchange="processData()"> <span class="text-xs">${m}</span></label>`;
+                mDiv.innerHTML += `<label class="flex items-center space-x-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer"><input type="checkbox" class="m-check" value="${i+1}" checked onchange="processData()"> <span class="text-xs font-semibold text-slate-600">${m}</span></label>`;
             });
         }
 
@@ -288,7 +290,7 @@
             document.getElementById('kpi-monto-proceso').innerText = `$ ${ocEnProc.toLocaleString('en-US', {minimumFractionDigits:2})}`;
             document.getElementById('kpi-monto-pend').innerText = `$ ${ocPend.toLocaleString('en-US', {minimumFractionDigits:2})}`;
 
-            renderMainChart(totalCot, ocProc);
+            renderMainChart();
             renderAdminChart(ocProc, countProc, ocEnProc, countEnProc, ocPend, countPend);
             renderServiciosChart();
             renderModelosChart();
@@ -296,17 +298,15 @@
             renderMaestro();
         }
 
-        // --- GRÁFICOS ---
-        function renderMainChart(totalYear, totalProcYear) {
+        function renderMainChart() {
             if (charts.main) charts.main.destroy();
             
             const mNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
             const monthly = {};
             
-            // Agrupar datos y encontrar último día operativo por mes
             filteredData.forEach(r => {
                 const d = parseDate(r['FECHA COTIZACION'] || r['FECHA INICIO']);
-                if (!monthly[d.month]) monthly[d.month] = { cot: 0, proc: 0, lastDay: 0 };
+                if (!monthly[d.month]) monthly[d.month] = { cot: 0, proc: 0, lastDay: 0, label: mNames[d.month-1] };
                 const mVal = parseMoney(r['PRECIO SERVIC.']);
                 monthly[d.month].cot += mVal;
                 if (d.day > monthly[d.month].lastDay) monthly[d.month].lastDay = d.day;
@@ -316,61 +316,66 @@
             });
 
             const sortedMs = Object.keys(monthly).sort((a,b) => a-b);
-            const labels = sortedMs.map(m => mNames[m-1]);
+            const labels = sortedMs.map(m => monthly[m].label);
 
-            // Cálculo de crecimiento normalizado
-            let growthHTML = "";
-            let currentGrowth = "0%";
-            if (sortedMs.length >= 1) {
-                const lastIdx = sortedMs.length - 1;
-                const currM = sortedMs[lastIdx];
-                const prevM = sortedMs[lastIdx - 1];
-
-                if (prevM) {
-                    const avgCurr = monthly[currM].cot / monthly[currM].lastDay;
-                    const avgPrev = monthly[prevM].cot / monthly[prevM].lastDay;
-                    const growthVal = ((avgCurr - avgPrev) / avgPrev) * 100;
-                    currentGrowth = growthVal.toFixed(1) + "%";
-                    const color = growthVal >= 0 ? 'growth-positive' : 'growth-negative';
-                    growthHTML = `<div class="text-[10px] font-bold uppercase text-slate-400">Crecimiento (Prom. Diario)</div>
-                                  <div class="text-xl font-black ${color}">${growthVal >= 0 ? '+' : ''}${currentGrowth}</div>`;
-                }
-            }
-            document.getElementById('growth-summary').innerHTML = growthHTML;
+            const growthLabels = sortedMs.map((m, i) => {
+                if (i === 0) return "0%";
+                const currM = m;
+                const prevM = sortedMs[i - 1];
+                const avgCurr = monthly[currM].cot / monthly[currM].lastDay;
+                const avgPrev = monthly[prevM].cot / monthly[prevM].lastDay;
+                const growthVal = ((avgCurr - avgPrev) / avgPrev) * 100;
+                return (growthVal >= 0 ? '+' : '') + growthVal.toFixed(1) + "%";
+            });
 
             charts.main = new Chart(document.getElementById('chart-main'), {
                 type: 'bar',
                 data: {
                     labels,
                     datasets: [
-                        { 
-                            label: 'Cotizado ($)', 
-                            data: sortedMs.map(m => monthly[m].cot), 
-                            backgroundColor: '#0f172a',
-                            datalabels: { align: 'end', anchor: 'end' } 
-                        },
-                        { 
-                            label: 'Procesado ($)', 
-                            data: sortedMs.map(m => monthly[m].proc), 
-                            backgroundColor: '#10b981' 
-                        }
+                        { label: 'Cotizado ($)', data: sortedMs.map(m => monthly[m].cot), backgroundColor: '#0f172a' },
+                        { label: 'Procesado ($)', data: sortedMs.map(m => monthly[m].proc), backgroundColor: '#10b981' }
                     ]
                 },
                 options: { 
                     maintainAspectRatio: false,
                     plugins: {
-                        tooltip: {
-                            callbacks: {
-                                footer: (items) => {
-                                    const mIndex = sortedMs[items[0].dataIndex];
-                                    const perc = ((monthly[mIndex].proc / monthly[mIndex].cot) * 100).toFixed(1);
-                                    return `Avance OC: ${perc}%`;
-                                }
-                            }
-                        }
+                        legend: { position: 'top', labels: { font: { size: 10, weight: 'bold' }, boxWidth: 12 } }
                     },
-                    scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString() } } }
-                }
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { callback: v => '$' + v.toLocaleString(), font: { size: 9 } },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: { grid: { display: false }, ticks: { font: { size: 9 } } }
+                    }
+                },
+                plugins: [{
+                    id: 'growthPlugin',
+                    afterDatasetsDraw(chart) {
+                        const { ctx, scales: { x, y } } = chart;
+                        ctx.save();
+                        ctx.font = 'bold 9px Segoe UI';
+                        ctx.textAlign = 'center';
+
+                        sortedMs.forEach((m, i) => {
+                            const val = monthly[m].cot;
+                            const xPos = x.getPixelForValue(labels[i]);
+                            const yPos = y.getPixelForValue(val) - 5;
+                            
+                            ctx.fillStyle = '#64748b';
+                            ctx.fillText(`$${(val/1000).toFixed(1)}k`, xPos, yPos - 15);
+
+                            if (i > 0) {
+                                const gText = growthLabels[i];
+                                ctx.fillStyle = gText.includes('-') ? '#ef4444' : '#10b981';
+                                ctx.fillText(gText, xPos, yPos - 3);
+                            }
+                        });
+                        ctx.restore();
+                    }
+                }]
             });
         }
 
@@ -383,14 +388,15 @@
                     datasets: [{ 
                         data: [p, e, n], 
                         backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-                        borderWidth: 0
+                        borderWidth: 4,
+                        borderColor: '#ffffff'
                     }]
                 },
                 options: { 
                     maintainAspectRatio: false, 
                     cutout: '70%',
                     plugins: { 
-                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11, weight: 'bold' } } } 
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, weight: 'bold' }, padding: 15 } } 
                     }
                 }
             });
@@ -399,31 +405,43 @@
         function renderServiciosChart() {
             if (charts.servs) charts.servs.destroy();
             const servs = {};
+            
             filteredData.forEach(r => {
-                const s = (r['DETALLE'] || "OTROS").trim().toUpperCase();
+                let s = (r['DETALLE'] || "OTROS").trim().toUpperCase();
+                if (s.includes("ALISTAMIENTO")) s = "ALISTAMIENTO INTEGRAL / PINTURA";
+                else if (s.includes("PINTURA")) s = "SERVICIO DE PINTURA";
+                else if (s.includes("EVALUACION")) s = "EVALUACIÓN TÉCNICA";
+                else if (s.includes("REPARACION") || s.includes("REPARO")) s = "REPARACIONES GENERALES";
+                
                 if (!servs[s]) servs[s] = { m: 0, c: 0 };
                 servs[s].m += parseMoney(r['PRECIO SERVIC.']);
                 servs[s].c += 1;
             });
+            
             const top5 = Object.entries(servs).sort((a,b) => b[1].m - a[1].m).slice(0, 5);
 
             charts.servs = new Chart(document.getElementById('chart-servicios'), {
                 type: 'bar',
                 data: {
-                    labels: top5.map(x => x[0].substring(0, 20) + '...'),
+                    labels: top5.map(x => x[0].length > 20 ? x[0].substring(0, 20) + '...' : x[0]),
                     datasets: [{ 
-                        label: 'Monto Total ($)', 
+                        label: 'Monto Acumulado ($)', 
                         data: top5.map(x => x[1].m), 
-                        backgroundColor: '#00508F' 
+                        backgroundColor: '#00508F',
+                        borderRadius: 4
                     }]
                 },
                 options: { 
                     indexAxis: 'y',
                     maintainAspectRatio: false,
+                    layout: { padding: { right: 40 } },
                     plugins: {
-                        tooltip: {
-                            callbacks: { afterLabel: (i) => `Cantidad: ${top5[i.dataIndex][1].c} unidades` }
-                        }
+                        legend: { display: false },
+                        tooltip: { callbacks: { afterLabel: (i) => `Volumen: ${top5[i.dataIndex][1].c} cotizaciones` } }
+                    },
+                    scales: {
+                        x: { ticks: { font: { size: 9 } }, grid: { display: false } },
+                        y: { ticks: { font: { size: 8, weight: 'bold' } } }
                     }
                 }
             });
@@ -447,22 +465,25 @@
                     datasets: [{ 
                         label: 'Unidades', 
                         data: top5.map(x => x[1].c), 
-                        backgroundColor: '#334155' 
+                        backgroundColor: '#334155',
+                        borderRadius: 4
                     }]
                 },
                 options: { 
                     indexAxis: 'y',
                     maintainAspectRatio: false,
                     plugins: {
-                        tooltip: {
-                            callbacks: { afterLabel: (i) => `Monto Total: $${top5[i.dataIndex][1].m.toLocaleString()}` }
-                        }
+                        legend: { display: false },
+                        tooltip: { callbacks: { afterLabel: (i) => `Monto Total: $${top5[i.dataIndex][1].m.toLocaleString()}` } }
+                    },
+                    scales: {
+                        x: { ticks: { font: { size: 9 } }, grid: { display: false } },
+                        y: { ticks: { font: { size: 9, weight: 'bold' } } }
                     }
                 }
             });
         }
 
-        // --- PÁGINAS ---
         function renderDetalle() {
             const container = document.getElementById('detalle-container');
             const mNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
@@ -479,39 +500,39 @@
                 const totalM = rows.reduce((acc, x) => acc + parseMoney(x['PRECIO SERVIC.']), 0);
                 return `
                     <div class="card overflow-hidden">
-                        <div class="p-4 bg-slate-800 text-white flex justify-between items-center cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                            <span class="font-bold text-sm uppercase">${mNames[m-1]} (${rows.length} Cotizaciones)</span>
-                            <div class="flex items-center space-x-4">
-                                <span class="text-xs opacity-80">Subtotal Mes: $${totalM.toLocaleString('en-US', {minimumFractionDigits:2})}</span>
+                        <div class="p-3 md:p-4 bg-slate-800 text-white flex justify-between items-center cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                            <span class="font-bold text-xs uppercase">${mNames[m-1]} (${rows.length})</span>
+                            <div class="flex items-center space-x-2 md:space-x-4">
+                                <span class="text-[9px] md:text-[10px] bg-white/20 px-2 py-1 rounded">Total: $${totalM.toLocaleString('en-US', {minimumFractionDigits:2})}</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
                             </div>
                         </div>
                         <div class="overflow-x-auto border-t">
-                            <table class="w-full text-[10px]">
-                                <thead class="bg-slate-50 border-b text-slate-500 uppercase">
+                            <table class="w-full text-[9px] md:text-[10px] min-w-[600px]">
+                                <thead class="bg-slate-50 border-b text-slate-500 uppercase font-bold">
                                     <tr>
-                                        <th class="p-3">COTI</th>
-                                        <th class="p-3">MODELO</th>
-                                        <th class="p-3">SERIE</th>
-                                        <th class="p-3">SERVICIO</th>
-                                        <th class="p-3">ESTADO TÉC</th>
-                                        <th class="p-3">FECHA OC</th>
-                                        <th class="p-3 text-right">MONTO</th>
+                                        <th class="p-2 md:p-3 text-left">COTI</th>
+                                        <th class="p-2 md:p-3 text-left">MODELO</th>
+                                        <th class="p-2 md:p-3 text-left">SERIE</th>
+                                        <th class="p-2 md:p-3 text-left">SERVICIO</th>
+                                        <th class="p-2 md:p-3 text-left">ESTADO</th>
+                                        <th class="p-2 md:p-3 text-left">OC VOLVO</th>
+                                        <th class="p-2 md:p-3 text-right">MONTO</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${rows.map(r => {
-                                        const isDate = /\d{2,4}/.test(r['FECHA OC']);
-                                        const dateClass = isDate ? 'date-active' : '';
+                                        const oc = r['FECHA OC'] || "";
+                                        const isOC = /\d/.test(oc);
                                         return `
-                                            <tr class="border-b hover:bg-slate-50 transition">
-                                                <td class="p-3 font-bold text-blue-900">${r['# COTI']}</td>
-                                                <td class="p-3 font-bold">${r['MODELO']}</td>
-                                                <td class="p-3">${r['SERIE']}</td>
-                                                <td class="p-3 text-slate-600">${r['DETALLE']}</td>
-                                                <td class="p-3"><span class="status-pill ${r['ESTADO TÉCNICO'].includes('Terminado')?'bg-terminado':'bg-proceso'}">${r['ESTADO TÉCNICO']}</span></td>
-                                                <td class="p-3"><span class="${dateClass}">${r['FECHA OC']}</span></td>
-                                                <td class="p-3 text-right font-black text-slate-700">${r['PRECIO SERVIC.']}</td>
+                                            <tr class="border-b hover:bg-slate-50">
+                                                <td class="p-2 md:p-3 font-bold text-blue-900">${r['# COTI']}</td>
+                                                <td class="p-2 md:p-3 font-bold">${r['MODELO']}</td>
+                                                <td class="p-2 md:p-3 text-slate-500">${r['SERIE']}</td>
+                                                <td class="p-2 md:p-3 text-slate-700 truncate max-w-[120px]" title="${r['DETALLE']}">${r['DETALLE']}</td>
+                                                <td class="p-2 md:p-3"><span class="status-pill ${r['ESTADO TÉCNICO'].includes('Terminado')?'bg-terminado':'bg-proceso'}">${r['ESTADO TÉCNICO']}</span></td>
+                                                <td class="p-2 md:p-3"><span class="${isOC?'date-active':''}">${oc}</span></td>
+                                                <td class="p-2 md:p-3 text-right font-bold text-slate-800">${r['PRECIO SERVIC.']}</td>
                                             </tr>
                                         `;
                                     }).join('')}
@@ -536,17 +557,17 @@
 
             body.innerHTML = sorted.map(([mod, series], idx) => `
                 <tr class="master-row" onclick="toggleSeries(${idx})">
-                    <td class="px-6 py-4 font-bold text-blue-900">VOLVO</td>
-                    <td class="px-6 py-4 font-bold">${mod}</td>
-                    <td class="px-6 py-4 text-center font-black text-blue-600 text-sm">${series.length}</td>
-                    <td class="px-6 py-4 text-right">
-                        <span class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-bold">Ver Series ▼</span>
+                    <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-slate-400">VOLVO</td>
+                    <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-blue-900">${mod}</td>
+                    <td class="px-4 md:px-6 py-3 md:py-4 text-center font-black text-blue-600">${series.length}</td>
+                    <td class="px-4 md:px-6 py-3 md:py-4 text-right">
+                        <button class="text-[9px] md:text-[10px] bg-blue-50 text-blue-600 px-2 md:px-3 py-1 rounded-full font-bold hover:bg-blue-600 hover:text-white transition">DETALLE ▼</button>
                     </td>
                 </tr>
                 <tr id="series-${idx}" class="series-list">
-                    <td colspan="4" class="px-10 py-4 italic text-slate-500 bg-slate-50 border-b">
-                        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-                            ${[...new Set(series)].map(s => `<span class="bg-white p-1.5 rounded shadow-sm text-center border border-slate-100 text-[10px]"># ${s}</span>`).join('')}
+                    <td colspan="4" class="px-4 md:px-10 py-3 md:py-4 bg-slate-50">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                            ${[...new Set(series)].map(s => `<span class="bg-white px-2 py-1 rounded border border-slate-200 text-[8px] md:text-[9px] text-center font-mono">S: ${s}</span>`).join('')}
                         </div>
                     </td>
                 </tr>
@@ -563,11 +584,33 @@
             document.getElementById(`series-${idx}`).classList.toggle('active');
         }
 
-        function showPage(id, btn) {
-            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-            btn.classList.add('active');
+        // Nueva función de navegación unificada para Móvil y Desktop
+        function showPage(id) {
+            // 1. Ocultar todas las páginas
             ['resumen', 'detalle', 'maestro'].forEach(p => document.getElementById('page-' + p).classList.add('hidden'));
+            
+            // 2. Mostrar la solicitada
             document.getElementById('page-' + id).classList.remove('hidden');
+
+            // 3. Sincronizar botones del Sidebar (Desktop)
+            document.querySelectorAll('.sidebar-item').forEach(btn => {
+                if(btn.getAttribute('data-target') === id) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // 4. Sincronizar botones del Tab Bar (Móvil)
+            document.querySelectorAll('.mobile-nav-item').forEach(btn => {
+                if(btn.getAttribute('data-target') === id) {
+                    btn.classList.remove('text-slate-400');
+                    btn.classList.add('text-blue-600');
+                } else {
+                    btn.classList.add('text-slate-400');
+                    btn.classList.remove('text-blue-600');
+                }
+            });
         }
 
         window.onload = init;
