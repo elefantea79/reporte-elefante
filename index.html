@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
-        :root { --sidebar-bg: #0f172a; --bg: #f8fafc; }
+        :root { --primary: #00508F; --sidebar-bg: #0f172a; --bg: #f8fafc; }
         body { background-color: var(--bg); font-family: 'Segoe UI', sans-serif; color: #1e293b; }
         .sidebar { background-color: var(--sidebar-bg); width: 260px; }
         .sidebar-item { cursor: pointer; color: #94a3b8; border-left: 4px solid transparent; transition: 0.2s; }
@@ -32,7 +32,7 @@
         </div>
         <nav class="flex-1 space-y-1">
             <div onclick="showPage('resumen')" data-target="resumen" class="sidebar-item active p-3 rounded-lg flex items-center space-x-3"><span>Resumen</span></div>
-            <div onclick="showPage('detalle')" data-target="detalle" class="sidebar-item p-3 rounded-lg flex items-center space-x-3"><span>Detalle</span></div>
+            <div onclick="showPage('detalle')" data-target="detalle" class="sidebar-item p-3 rounded-lg flex items-center space-x-3"><span>Detalle Cotizaciones</span></div>
         </nav>
     </aside>
 
@@ -59,18 +59,19 @@
                         <div id="kpi-total" class="text-2xl font-black text-slate-800 mt-1">$ 0</div>
                     </div>
                     <div class="card p-5 border-l-4 border-emerald-500">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">Facturado/OC</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">OC Procesada</span>
                         <div id="kpi-oc" class="text-2xl font-black text-emerald-600 mt-1">$ 0</div>
                     </div>
                     <div class="card p-5 border-l-4 border-amber-500">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">En Proceso</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">En Proceso OC</span>
                         <div id="kpi-proceso" class="text-2xl font-black text-amber-600 mt-1">$ 0</div>
                     </div>
                     <div class="card p-5 border-l-4 border-rose-500">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">Pendiente</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Pendiente de OC</span>
                         <div id="kpi-pendiente" class="text-2xl font-black text-rose-600 mt-1">$ 0</div>
                     </div>
                 </div>
+
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="card p-6 h-80"><canvas id="chart-main"></canvas></div>
                     <div class="card p-6 h-80"><canvas id="chart-admin"></canvas></div>
@@ -87,16 +88,22 @@
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSO6RWELO8boOz-hzOH0Pb3mYZH3r3I8fWy9DxErOz5W3SWS2AilvndMW6b894hCIvBJyUX4htGMato/pub?gid=816705007&single=true&output=csv";
         let rawData = [], filteredData = [], charts = {};
 
+        // Mejora en el parsing de dinero para evitar inflar números
         const parseMoney = (v) => {
             if (!v) return 0;
-            return parseFloat(v.toString().replace(/[$\s]/g, '').replace(',', '.')) || 0;
+            let clean = v.toString().replace(/[$\s]/g, '');
+            if (clean.includes(',') && clean.includes('.')) clean = clean.replace(',', '');
+            else if (clean.includes(',')) clean = clean.replace(',', '.');
+            return parseFloat(clean) || 0;
         };
 
         const parseDate = (s) => {
             if (!s || s.trim() === "") return null;
             const p = s.includes('/') ? s.split('/') : s.split('-');
             if (p.length < 3) return null;
-            const d = parseInt(p[0]), m = parseInt(p[1]), y = parseInt(p[2]);
+            let d, m, y;
+            if (s.includes('-') && p[0].length === 4) { y = parseInt(p[0]); m = parseInt(p[1]); d = parseInt(p[2]); }
+            else { d = parseInt(p[0]); m = parseInt(p[1]); y = parseInt(p[2]); }
             return { day: d, month: m, year: y < 100 ? 2000 + y : y };
         };
 
@@ -138,14 +145,14 @@
             const selMs = Array.from(document.querySelectorAll('.m-check:checked')).map(c => parseInt(c.value));
 
             filteredData = rawData.filter(r => {
-                // REGLA DE FECHAS: Prioridad Cotización > Inicio
+                // REGLA 1: Prioridad Cotización > Inicio
                 const fCoti = (r['FECHA COTIZACION'] || "").trim();
                 const fInic = (r['FECHA INICIO'] || "").trim();
                 const d = parseDate(fCoti !== "" ? fCoti : fInic);
 
                 if (!d || d.year !== selY || !selMs.includes(d.month)) return false;
 
-                // REGLA DE EXCLUSIÓN: Solo FECHA OC (Ignora Estado Técnico)
+                // REGLA 2: Exclusión por FECHA OC (Anulado/Evaluacion)
                 const statusOC = (r['FECHA OC'] || "").toUpperCase();
                 if (statusOC.includes("ANULADO") || statusOC.includes("EVALUACION")) return false;
 
@@ -161,15 +168,16 @@
                 const val = parseMoney(r['PRECIO SERVIC.']);
                 const f = (r['FECHA OC'] || "").toUpperCase();
                 total += val;
+                // Lógica de estados administrativos
                 if (f.includes("FACTURADO") || /\d{4}/.test(f)) oc += val;
                 else if (f.includes("PROCESO")) proc += val;
                 else if (f.includes("PENDIENTE")) pend += val;
             });
 
-            document.getElementById('kpi-total').innerText = `$ ${total.toLocaleString()}`;
-            document.getElementById('kpi-oc').innerText = `$ ${oc.toLocaleString()}`;
-            document.getElementById('kpi-proceso').innerText = `$ ${proc.toLocaleString()}`;
-            document.getElementById('kpi-pendiente').innerText = `$ ${pend.toLocaleString()}`;
+            document.getElementById('kpi-total').innerText = `$ ${total.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+            document.getElementById('kpi-oc').innerText = `$ ${oc.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+            document.getElementById('kpi-proceso').innerText = `$ ${proc.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+            document.getElementById('kpi-pendiente').innerText = `$ ${pend.toLocaleString('en-US', {minimumFractionDigits:2})}`;
 
             renderCharts(oc, proc, pend);
             renderDetalle();
@@ -183,12 +191,11 @@
                 type: 'doughnut',
                 data: {
                     labels: ['Facturado', 'En Proceso', 'Pendiente'],
-                    datasets: [{ data: [oc, proc, pend], backgroundColor: ['#10b981', '#f59e0b', '#ef4444'] }]
+                    datasets: [{ data: [oc, proc, pend], backgroundColor: ['#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }]
                 },
-                options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'Distribución Administrativa' } } }
+                options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
             });
 
-            // Gráfica de barras por mes
             const mData = new Array(12).fill(0);
             filteredData.forEach(r => {
                 const f = r['FECHA COTIZACION']?.trim() ? r['FECHA COTIZACION'] : r['FECHA INICIO'];
@@ -200,22 +207,24 @@
                 type: 'bar',
                 data: {
                     labels: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
-                    datasets: [{ label: 'Ventas $', data: mData, backgroundColor: '#00508F' }]
+                    datasets: [{ label: 'Cotizado $', data: mData, backgroundColor: '#0f172a', borderRadius: 5 }]
                 },
-                options: { maintainAspectRatio: false }
+                options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
             });
         }
 
         function renderDetalle() {
             const container = document.getElementById('detalle-container');
-            container.innerHTML = filteredData.length === 0 ? '<p class="text-center text-slate-400">No hay datos para mostrar</p>' : 
+            container.innerHTML = filteredData.length === 0 ? '<p class="text-center text-slate-400">Sin datos</p>' : 
             `<div class="card overflow-x-auto"><table class="w-full text-left text-[11px]">
-                <thead class="bg-slate-100 border-b"><tr><th class="p-3">COTI</th><th class="p-3">MODELO</th><th class="p-3">ESTADO OC</th><th class="p-3 text-right">MONTO</th></tr></thead>
+                <thead class="bg-slate-50 border-b font-bold uppercase text-slate-500">
+                    <tr><th class="p-3">COTI</th><th class="p-3">MODELO</th><th class="p-3">ESTADO OC</th><th class="p-3 text-right">MONTO</th></tr>
+                </thead>
                 <tbody>${filteredData.map(r => `
-                    <tr class="border-b">
-                        <td class="p-3 font-bold">${r['# COTI']}</td>
+                    <tr class="border-b hover:bg-slate-50">
+                        <td class="p-3 font-bold text-blue-900">${r['# COTI']}</td>
                         <td class="p-3">${r['MODELO']}</td>
-                        <td class="p-3">${r['FECHA OC']}</td>
+                        <td class="p-3"><span class="${r['FECHA OC'].includes('PENDIENTE')?'text-rose-600 font-bold':''}">${r['FECHA OC']}</span></td>
                         <td class="p-3 text-right font-bold">$ ${r['PRECIO SERVIC.']}</td>
                     </tr>`).join('')}
                 </tbody></table></div>`;
