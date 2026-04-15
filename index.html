@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Operativo Elefante</title>
+    <title>Dashboard Operativo · Elefante</title>
+    <!-- Dependencias -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -41,6 +42,7 @@
 </head>
 <body class="flex h-screen overflow-hidden relative">
 
+    <!-- SIDEBAR (Desktop) -->
     <aside class="sidebar text-white hidden md:flex flex-col p-6 shrink-0 h-full">
         <div class="flex items-center space-x-3 mb-10">
             <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl font-mono">E</div>
@@ -65,87 +67,109 @@
         </nav>
     </aside>
 
+    <!-- CONTENIDO PRINCIPAL -->
     <main class="flex-1 flex flex-col min-w-0 h-full relative">
+        
+        <!-- HEADER -->
         <header class="h-16 md:h-20 bg-white border-b flex items-center justify-between px-4 md:px-8 shrink-0">
             <div>
                 <h2 id="view-title" class="font-bold text-sm md:text-lg text-blue-900 truncate">Panel de Control Operativo</h2>
             </div>
             <div class="flex items-center space-x-2 md:space-x-4">
+                <!-- Selector de año -->
                 <div class="flex items-center bg-slate-50 p-1 rounded-lg border border-slate-200">
                     <span class="text-[9px] md:text-[10px] font-bold text-slate-400 px-1 md:px-2">AÑO:</span>
                     <select id="filter-year" onchange="processData()" class="bg-transparent px-1 md:px-2 py-1.5 rounded text-xs font-bold outline-none"></select>
                 </div>
+                <!-- Dropdown meses -->
                 <div class="relative">
                     <button onclick="toggleMonthsDropdown()" class="bg-blue-600 text-white px-2 md:px-4 py-1.5 md:py-2 rounded-lg text-xs font-bold flex items-center space-x-1 md:space-x-2">
-                        <span>Filtrar Meses</span>
+                        <span class="hidden md:inline">Filtrar Meses</span>
+                        <span class="md:hidden">Meses</span>
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
                     </button>
-                    <div id="filter-months" class="dropdown-content mt-2 p-4 right-0 w-48"></div>
+                    <div id="filter-months" class="dropdown-content mt-2 p-4 right-0 w-48 md:w-auto"></div>
                 </div>
             </div>
         </header>
 
-        <div id="content-scroll" class="p-4 md:p-8 pb-24 md:pb-8 overflow-y-auto flex-1 space-y-6">
+        <!-- ÁREA DE CONTENIDO (SCROLL) -->
+        <div id="content-scroll" class="p-4 md:p-8 pb-24 md:pb-8 overflow-y-auto flex-1 space-y-6 md:space-y-8">
+            <!-- PÁGINA RESUMEN -->
             <div id="page-resumen" class="space-y-6">
+                <!-- KPIs -->
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
-                    <div class="card p-4 border-l-4 border-blue-600">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase">Nro Cotizaciones</span>
+                    <div class="card p-4 md:p-5 border-l-4 border-blue-600 col-span-2 md:col-span-1">
+                        <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nro Cotizaciones</span>
                         <div id="kpi-qty" class="text-xl md:text-2xl font-black text-slate-800 mt-1">0</div>
                     </div>
-                    <div class="card p-4 border-l-4 border-slate-800">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase">Total Cotizado ($)</span>
+                    <div class="card p-4 md:p-5 border-l-4 border-slate-800">
+                        <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Cotizado ($)</span>
                         <div id="kpi-monto-total" class="text-lg md:text-2xl font-black text-slate-800 mt-1">$ 0</div>
                     </div>
-                    <div class="card p-4 border-l-4 border-emerald-500">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase">Facturado / OC</span>
+                    <div class="card p-4 md:p-5 border-l-4 border-emerald-500">
+                        <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">OC Procesada</span>
                         <div id="kpi-monto-oc" class="text-lg md:text-2xl font-black text-emerald-600 mt-1">$ 0</div>
                     </div>
-                    <div class="card p-4 border-l-4 border-amber-500">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase">En Proceso</span>
+                    <div class="card p-4 md:p-5 border-l-4 border-amber-500">
+                        <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">EN PROCESO OC</span>
                         <div id="kpi-monto-proceso" class="text-lg md:text-2xl font-black text-amber-600 mt-1">$ 0</div>
                     </div>
-                    <div class="card p-4 border-l-4 border-rose-500">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase">Pendiente</span>
+                    <div class="card p-4 md:p-5 border-l-4 border-rose-500">
+                        <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">PENDIENTE DE OC</span>
                         <div id="kpi-monto-pend" class="text-lg md:text-2xl font-black text-rose-600 mt-1">$ 0</div>
                     </div>
                 </div>
 
+                <!-- Gráficos principales -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="card p-6">
-                        <h3 class="text-xs font-bold text-slate-700 uppercase mb-4">Ventas por Mes ($)</h3>
-                        <div class="h-72"><canvas id="chart-main"></canvas></div>
+                    <div class="card p-4 md:p-6">
+                        <div class="mb-4 md:mb-6 flex justify-between items-start">
+                            <div>
+                                <h3 class="text-xs md:text-sm font-bold text-slate-700 uppercase">Progresión de Venta & Crecimiento %</h3>
+                                <p class="text-[9px] md:text-[10px] text-slate-500 italic mt-1">Basado en promedio diario vs mes anterior</p>
+                            </div>
+                        </div>
+                        <div class="h-64 md:h-80 relative">
+                            <canvas id="chart-main"></canvas>
+                        </div>
                     </div>
-                    <div class="card p-6 text-center">
-                        <h3 class="text-xs font-bold text-slate-700 uppercase mb-4">Distribución Administrativa</h3>
-                        <div class="h-72"><canvas id="chart-admin"></canvas></div>
+                    <div class="card p-4 md:p-6">
+                        <h3 class="text-xs md:text-sm font-bold text-slate-700 mb-4 md:mb-6 uppercase tracking-wider text-center">Estado Administrativo General</h3>
+                        <div class="h-64 md:h-80"><canvas id="chart-admin"></canvas></div>
                     </div>
                 </div>
 
+                <!-- Top servicios / modelos -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="card p-6">
-                        <h3 class="text-xs font-bold text-slate-700 uppercase mb-4">Top Servicios (Monto)</h3>
+                    <div class="card p-4 md:p-6">
+                        <h3 class="text-xs md:text-sm font-bold text-slate-700 mb-4 md:mb-6 uppercase tracking-wider">Top 5 Servicios</h3>
                         <div class="h-64"><canvas id="chart-servicios"></canvas></div>
                     </div>
-                    <div class="card p-6">
-                        <h3 class="text-xs font-bold text-slate-700 uppercase mb-4">Top Modelos (Unidades)</h3>
+                    <div class="card p-4 md:p-6">
+                        <h3 class="text-xs md:text-sm font-bold text-slate-700 mb-4 md:mb-6 uppercase tracking-wider">Top 5 Modelos de Máquina</h3>
                         <div class="h-64"><canvas id="chart-modelos"></canvas></div>
                     </div>
                 </div>
             </div>
 
+            <!-- PÁGINA DETALLE -->
             <div id="page-detalle" class="hidden space-y-4">
                 <div id="detalle-container" class="space-y-4"></div>
             </div>
 
+            <!-- PÁGINA MAESTRO (HISTORIAL) -->
             <div id="page-maestro" class="hidden">
                 <div class="card overflow-x-auto">
                     <table class="w-full text-left text-xs min-w-[500px]">
                         <thead>
                             <tr class="bg-slate-100 text-slate-600 border-b uppercase font-bold">
-                                <th class="px-6 py-4">Fabricante</th>
-                                <th class="px-6 py-4">Modelo</th>
-                                <th class="px-6 py-4 text-center cursor-pointer" onclick="toggleSortMaestro()">Unidades <span id="sort-icon">▼</span></th>
-                                <th class="px-6 py-4 text-right">Acción</th>
+                                <th class="px-4 md:px-6 py-4">Fabricante</th>
+                                <th class="px-4 md:px-6 py-4">Modelo</th>
+                                <th class="px-4 md:px-6 py-4 text-center cursor-pointer hover:bg-slate-200 transition" onclick="toggleSortMaestro()">
+                                    Unidades <span id="sort-icon">▼</span>
+                                </th>
+                                <th class="px-4 md:px-6 py-4 text-right">Acción</th>
                             </tr>
                         </thead>
                         <tbody id="table-maestro-body" class="divide-y divide-slate-100"></tbody>
@@ -154,278 +178,525 @@
             </div>
         </div>
 
-        <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white border-t flex justify-around items-center h-16 z-50 shadow-lg">
-            <div onclick="showPage('resumen')" data-target="resumen" class="mobile-nav-item text-blue-600 flex flex-col items-center flex-1">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"></path></svg>
+        <!-- BARRA DE NAVEGACIÓN MÓVIL -->
+        <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white border-t flex justify-around items-center h-16 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+            <div onclick="showPage('resumen')" data-target="resumen" class="mobile-nav-item text-blue-600 flex flex-col items-center justify-center w-full h-full cursor-pointer">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
                 <span class="text-[10px] font-bold mt-1">Resumen</span>
             </div>
-            <div onclick="showPage('detalle')" data-target="detalle" class="mobile-nav-item text-slate-400 flex flex-col items-center flex-1">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+            <div onclick="showPage('detalle')" data-target="detalle" class="mobile-nav-item text-slate-400 hover:text-blue-500 flex flex-col items-center justify-center w-full h-full cursor-pointer transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                 <span class="text-[10px] font-bold mt-1">Detalle</span>
             </div>
-            <div onclick="showPage('maestro')" data-target="maestro" class="mobile-nav-item text-slate-400 flex flex-col items-center flex-1">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+            <div onclick="showPage('maestro')" data-target="maestro" class="mobile-nav-item text-slate-400 hover:text-blue-500 flex flex-col items-center justify-center w-full h-full cursor-pointer transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                 <span class="text-[10px] font-bold mt-1">Maestro</span>
             </div>
         </nav>
     </main>
 
     <script>
-        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSO6RWELO8boOz-hzOH0Pb3mYZH3r3I8fWy9DxErOz5W3SWS2AilvndMW6b894hCIvBJyUX4htGMato/pub?gid=816705007&single=true&output=csv";
-        let rawData = [];
-        let filteredData = [];
-        let charts = {};
-        let sortDesc = true;
+        (function(){
+            // ---------- CONFIGURACIÓN ----------
+            const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSO6RWELO8boOz-hzOH0Pb3mYZH3r3I8fWy9DxErOz5W3SWS2AilvndMW6b894hCIvBJyUX4htGMato/pub?gid=816705007&single=true&output=csv";
+            let rawData = [];
+            let filteredData = [];
+            let charts = {};
+            let sortDesc = true;
 
-        const parseMoney = (val) => {
-            if (!val || val === "") return 0;
-            let clean = val.toString().replace(/[$\s]/g, '').replace(/,/g, '');
-            return parseFloat(clean) || 0;
-        };
-
-        const parseDate = (str) => {
-            if (!str) return null;
-            let d, m, y;
-            if (str.includes('-')) {
-                const p = str.split('-'); d = parseInt(p[2]); m = parseInt(p[1]); y = parseInt(p[0]);
-            } else if (str.includes('/')) {
-                const p = str.split('/'); d = parseInt(p[0]); m = parseInt(p[1]); y = parseInt(p[2]);
+            // ---------- FUNCIONES AUXILIARES ----------
+            // Parseo robusto de moneda (soporta $1,220.00 y $1.220,00)
+            function parseMoney(val) {
+                if (!val || val === "") return 0;
+                let str = val.toString().trim();
+                // Eliminar símbolo de moneda y espacios
+                str = str.replace(/[$\\s]/g, '');
+                
+                let decimalSep = '.';
+                let thousandSep = ',';
+                
+                if (str.includes(',') && str.includes('.')) {
+                    const lastComma = str.lastIndexOf(',');
+                    const lastDot = str.lastIndexOf('.');
+                    if (lastComma > lastDot) {
+                        decimalSep = ',';
+                        thousandSep = '.';
+                    } else {
+                        decimalSep = '.';
+                        thousandSep = ',';
+                    }
+                } else if (str.includes(',')) {
+                    // Si solo hay coma, verificamos si es decimal (seguida de exactamente 2 dígitos al final)
+                    if (/,\d{2}$/.test(str)) {
+                        decimalSep = ',';
+                        thousandSep = '.';
+                    } else {
+                        thousandSep = ',';
+                        decimalSep = '.';
+                    }
+                }
+                
+                // Eliminar separadores de miles
+                if (thousandSep) {
+                    str = str.split(thousandSep).join('');
+                }
+                // Reemplazar separador decimal por punto
+                if (decimalSep !== '.') {
+                    str = str.replace(decimalSep, '.');
+                }
+                
+                return parseFloat(str) || 0;
             }
-            return { day: d, month: m, year: y, obj: new Date(y, m - 1, d) };
-        };
 
-        function toggleMonthsDropdown() {
-            document.getElementById('filter-months').classList.toggle('show');
-        }
+            function parseDate(str) {
+                if (!str) return null;
+                let d, m, y;
+                const clean = str.trim();
+                if (clean.includes('-')) {
+                    const p = clean.split('-');
+                    y = parseInt(p[0]); m = parseInt(p[1]); d = parseInt(p[2]);
+                } else if (clean.includes('/')) {
+                    const p = clean.split('/');
+                    d = parseInt(p[0]); m = parseInt(p[1]); y = parseInt(p[2]);
+                } else {
+                    return null;
+                }
+                if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+                return { day: d, month: m, year: y, obj: new Date(y, m-1, d) };
+            }
 
-        async function init() {
-            try {
-                const resp = await fetch(`${CSV_URL}&t=${Date.now()}`);
-                const text = await resp.text();
-                Papa.parse(text, {
-                    header: true, skipEmptyLines: true,
-                    complete: (results) => {
-                        rawData = results.data;
-                        setupFilters();
-                        processData();
+            // ---------- INTERACCIÓN UI ----------
+            function toggleMonthsDropdown() {
+                document.getElementById('filter-months').classList.toggle('show');
+            }
+
+            window.onclick = function(event) {
+                if (!event.target.closest('.relative')) {
+                    document.getElementById('filter-months').classList.remove('show');
+                }
+            }
+
+            // ---------- CARGA INICIAL ----------
+            async function init() {
+                try {
+                    const resp = await fetch(`${CSV_URL}&t=${Date.now()}`);
+                    const text = await resp.text();
+                    Papa.parse(text, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: (results) => {
+                            rawData = results.data;
+                            setupFilters();
+                            processData();
+                        }
+                    });
+                } catch (e) {
+                    console.error("Error cargando CSV", e);
+                }
+            }
+
+            function setupFilters() {
+                const ySel = document.getElementById('filter-year');
+                const mDiv = document.getElementById('filter-months');
+                if (ySel.options.length > 0) return;
+
+                const years = [...new Set(rawData.map(r => {
+                    const d = parseDate(r['FECHA COTIZACION'] || r['FECHA INICIO']);
+                    return d ? d.year : null;
+                }))].filter(y => y && y >= 2024).sort((a,b) => b-a);
+
+                years.forEach(y => ySel.add(new Option(y, y)));
+                ySel.value = "2026";
+
+                const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+                mDiv.innerHTML = `<label class="flex items-center space-x-2 p-2 font-bold border-b mb-2"><input type="checkbox" id="all-m" checked onchange="toggleAllMonths(this)"> <span class="text-sm">Seleccionar Todos</span></label>`;
+                meses.forEach((m, i) => {
+                    mDiv.innerHTML += `<label class="flex items-center space-x-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer"><input type="checkbox" class="m-check" value="${i+1}" checked onchange="processData()"> <span class="text-xs font-semibold text-slate-600">${m}</span></label>`;
+                });
+            }
+
+            window.toggleAllMonths = function(src) {
+                document.querySelectorAll('.m-check').forEach(c => c.checked = src.checked);
+                processData();
+            }
+
+            // ---------- FILTRADO PRINCIPAL (con reglas de negocio) ----------
+            function processData() {
+                const selY = parseInt(document.getElementById('filter-year').value);
+                const selMs = Array.from(document.querySelectorAll('.m-check:checked')).map(c => parseInt(c.value));
+
+                filteredData = rawData.filter(r => {
+                    // Prioridad de fecha: FECHA COTIZACION, luego FECHA INICIO
+                    const d = parseDate(r['FECHA COTIZACION'] || r['FECHA INICIO']);
+                    if (!d || d.year !== selY || !selMs.includes(d.month)) return false;
+
+                    // EXCLUSIÓN: si FECHA OC contiene "ANULADO" o "EVALUACION" (ignorar ESTADO TÉCNICO)
+                    const fechaOC = (r['FECHA OC'] || "").toString().toUpperCase();
+                    if (fechaOC.includes("ANULADO") || fechaOC.includes("EVALUACION")) return false;
+
+                    return true;
+                });
+
+                updateDashboard();
+            }
+
+            // ---------- ACTUALIZACIÓN DE KPIs Y GRÁFICOS ----------
+            function updateDashboard() {
+                let totalCot = 0, ocProc = 0, ocEnProc = 0, ocPend = 0;
+                let countProc = 0, countEnProc = 0, countPend = 0;
+
+                filteredData.forEach(r => {
+                    const val = parseMoney(r['PRECIO SERVIC.']);
+                    const f = (r['FECHA OC'] || "").toString().toUpperCase();
+                    totalCot += val;
+
+                    if (f.includes("FACTURADO") || /\d{4}/.test(f)) {
+                        ocProc += val;
+                        countProc++;
+                    } else if (f.includes("PROCESO")) {
+                        ocEnProc += val;
+                        countEnProc++;
+                    } else if (f.includes("PENDIENTE")) {
+                        ocPend += val;
+                        countPend++;
                     }
                 });
-            } catch (e) { console.error("Error cargando CSV", e); }
-        }
 
-        function setupFilters() {
-            const ySel = document.getElementById('filter-year');
-            const mDiv = document.getElementById('filter-months');
-            if (ySel.options.length > 0) return;
+                document.getElementById('kpi-qty').innerText = filteredData.length;
+                document.getElementById('kpi-monto-total').innerText = `$ ${totalCot.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+                document.getElementById('kpi-monto-oc').innerText = `$ ${ocProc.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+                document.getElementById('kpi-monto-proceso').innerText = `$ ${ocEnProc.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+                document.getElementById('kpi-monto-pend').innerText = `$ ${ocPend.toLocaleString('en-US', {minimumFractionDigits:2})}`;
 
-            const years = [...new Set(rawData.map(r => {
-                const d = parseDate(r['FECHA COTIZACION'] || r['FECHA INICIO']);
-                return d ? d.year : null;
-            }))].filter(y => y && y >= 2024).sort((a,b) => b-a);
+                renderMainChart();
+                renderAdminChart(ocProc, countProc, ocEnProc, countEnProc, ocPend, countPend);
+                renderServiciosChart();
+                renderModelosChart();
+                renderDetalle();
+                renderMaestro();
+            }
 
-            years.forEach(y => ySel.add(new Option(y, y)));
-            ySel.value = "2026";
+            // ---------- GRÁFICO PRINCIPAL (BARRAS + CRECIMIENTO) ----------
+            function renderMainChart() {
+                if (charts.main) charts.main.destroy();
+                
+                const mNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+                const monthly = {};
+                
+                filteredData.forEach(r => {
+                    const d = parseDate(r['FECHA COTIZACION'] || r['FECHA INICIO']);
+                    if (!monthly[d.month]) monthly[d.month] = { cot: 0, proc: 0, lastDay: 0, label: mNames[d.month-1] };
+                    const mVal = parseMoney(r['PRECIO SERVIC.']);
+                    monthly[d.month].cot += mVal;
+                    if (d.day > monthly[d.month].lastDay) monthly[d.month].lastDay = d.day;
+                    
+                    const f = (r['FECHA OC'] || "").toString().toUpperCase();
+                    if (f.includes("FACTURADO") || /\d{4}/.test(f)) monthly[d.month].proc += mVal;
+                });
 
-            const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-            mDiv.innerHTML = `<label class="flex items-center space-x-2 p-2 font-bold border-b mb-2"><input type="checkbox" id="all-m" checked onchange="toggleAllMonths(this)"> <span class="text-sm">Todos</span></label>`;
-            meses.forEach((m, i) => {
-                mDiv.innerHTML += `<label class="flex items-center space-x-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer"><input type="checkbox" class="m-check" value="${i+1}" checked onchange="processData()"> <span class="text-xs font-semibold">${m}</span></label>`;
-            });
-        }
+                const sortedMs = Object.keys(monthly).sort((a,b) => a-b);
+                const labels = sortedMs.map(m => monthly[m].label);
 
-        function toggleAllMonths(src) {
-            document.querySelectorAll('.m-check').forEach(c => c.checked = src.checked);
-            processData();
-        }
+                const growthLabels = sortedMs.map((m, i) => {
+                    if (i === 0) return "0%";
+                    const currM = m;
+                    const prevM = sortedMs[i - 1];
+                    const avgCurr = monthly[currM].cot / monthly[currM].lastDay;
+                    const avgPrev = monthly[prevM].cot / monthly[prevM].lastDay;
+                    const growthVal = ((avgCurr - avgPrev) / avgPrev) * 100;
+                    return (growthVal >= 0 ? '+' : '') + growthVal.toFixed(1) + "%";
+                });
 
-        function processData() {
-            const selY = parseInt(document.getElementById('filter-year').value);
-            const selMs = Array.from(document.querySelectorAll('.m-check:checked')).map(c => parseInt(c.value));
+                charts.main = new Chart(document.getElementById('chart-main'), {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: 'Cotizado ($)', data: sortedMs.map(m => monthly[m].cot), backgroundColor: '#0f172a' },
+                            { label: 'Procesado ($)', data: sortedMs.map(m => monthly[m].proc), backgroundColor: '#10b981' }
+                        ]
+                    },
+                    options: { 
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top', labels: { font: { size: 10, weight: 'bold' }, boxWidth: 12 } }
+                        },
+                        scales: { 
+                            y: { 
+                                beginAtZero: true, 
+                                ticks: { callback: v => '$' + v.toLocaleString(), font: { size: 9 } },
+                                grid: { color: '#f1f5f9' }
+                            },
+                            x: { grid: { display: false }, ticks: { font: { size: 9 } } }
+                        }
+                    },
+                    plugins: [{
+                        id: 'growthPlugin',
+                        afterDatasetsDraw(chart) {
+                            const { ctx, scales: { x, y } } = chart;
+                            ctx.save();
+                            ctx.font = 'bold 9px Segoe UI';
+                            ctx.textAlign = 'center';
 
-            filteredData = rawData.filter(r => {
-                const d = parseDate(r['FECHA COTIZACION'] || r['FECHA INICIO']);
-                if (!d || d.year !== selY || !selMs.includes(d.month)) return false;
-                const tec = (r['ESTADO TÉCNICO'] || "").toUpperCase();
-                return !(tec.includes("ANULADO") || tec.includes("EVALUACION"));
-            });
+                            sortedMs.forEach((m, i) => {
+                                const val = monthly[m].cot;
+                                const xPos = x.getPixelForValue(labels[i]);
+                                const yPos = y.getPixelForValue(val) - 5;
+                                
+                                ctx.fillStyle = '#64748b';
+                                ctx.fillText(`$${(val/1000).toFixed(1)}k`, xPos, yPos - 15);
 
-            updateDashboard();
-        }
+                                if (i > 0) {
+                                    const gText = growthLabels[i];
+                                    ctx.fillStyle = gText.includes('-') ? '#ef4444' : '#10b981';
+                                    ctx.fillText(gText, xPos, yPos - 3);
+                                }
+                            });
+                            ctx.restore();
+                        }
+                    }]
+                });
+            }
 
-        function updateDashboard() {
-            let totalCot = 0, facturado = 0, enProceso = 0, pendiente = 0;
-            let cFact = 0, cProc = 0, cPend = 0;
+            function renderAdminChart(p, cp, e, ce, n, cn) {
+                if (charts.admin) charts.admin.destroy();
+                charts.admin = new Chart(document.getElementById('chart-admin'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: [`Procesada (${cp})`, `En Proceso (${ce})`, `Pendiente (${cn})`],
+                        datasets: [{ 
+                            data: [p, e, n], 
+                            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                            borderWidth: 4,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: { 
+                        maintainAspectRatio: false, 
+                        cutout: '70%',
+                        plugins: { 
+                            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, weight: 'bold' }, padding: 15 } } 
+                        }
+                    }
+                });
+            }
 
-            filteredData.forEach(r => {
-                const val = parseMoney(r['PRECIO SERVIC.']);
-                const f = (r['FECHA OC'] || "").toUpperCase();
-                totalCot += val;
+            function renderServiciosChart() {
+                if (charts.servs) charts.servs.destroy();
+                const servs = {};
+                
+                filteredData.forEach(r => {
+                    let s = (r['DETALLE'] || "OTROS").trim().toUpperCase();
+                    if (s.includes("ALISTAMIENTO")) s = "ALISTAMIENTO INTEGRAL / PINTURA";
+                    else if (s.includes("PINTURA")) s = "SERVICIO DE PINTURA";
+                    else if (s.includes("EVALUACION")) s = "EVALUACIÓN TÉCNICA";
+                    else if (s.includes("REPARACION") || s.includes("REPARO")) s = "REPARACIONES GENERALES";
+                    
+                    if (!servs[s]) servs[s] = { m: 0, c: 0 };
+                    servs[s].m += parseMoney(r['PRECIO SERVIC.']);
+                    servs[s].c += 1;
+                });
+                
+                const top5 = Object.entries(servs).sort((a,b) => b[1].m - a[1].m).slice(0, 5);
 
-                if (f.includes("FACTURADO") || /\d{4}/.test(f)) { facturado += val; cFact++; }
-                else if (f.includes("PROCESO")) { enProceso += val; cProc++; }
-                else if (f.includes("PENDIENTE")) { pendiente += val; cPend++; }
-            });
+                charts.servs = new Chart(document.getElementById('chart-servicios'), {
+                    type: 'bar',
+                    data: {
+                        labels: top5.map(x => x[0].length > 20 ? x[0].substring(0, 20) + '...' : x[0]),
+                        datasets: [{ 
+                            label: 'Monto Acumulado ($)', 
+                            data: top5.map(x => x[1].m), 
+                            backgroundColor: '#00508F',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: { 
+                        indexAxis: 'y',
+                        maintainAspectRatio: false,
+                        layout: { padding: { right: 40 } },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { afterLabel: (i) => `Volumen: ${top5[i.dataIndex][1].c} cotizaciones` } }
+                        },
+                        scales: {
+                            x: { ticks: { font: { size: 9 } }, grid: { display: false } },
+                            y: { ticks: { font: { size: 8, weight: 'bold' } } }
+                        }
+                    }
+                });
+            }
 
-            document.getElementById('kpi-qty').innerText = filteredData.length;
-            document.getElementById('kpi-monto-total').innerText = `$ ${totalCot.toLocaleString('en-US', {minimumFractionDigits:2})}`;
-            document.getElementById('kpi-monto-oc').innerText = `$ ${facturado.toLocaleString('en-US', {minimumFractionDigits:2})}`;
-            document.getElementById('kpi-monto-proceso').innerText = `$ ${enProceso.toLocaleString('en-US', {minimumFractionDigits:2})}`;
-            document.getElementById('kpi-monto-pend').innerText = `$ ${pendiente.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+            function renderModelosChart() {
+                if (charts.mods) charts.mods.destroy();
+                const mods = {};
+                filteredData.forEach(r => {
+                    const m = (r['MODELO'] || "OTROS").trim().toUpperCase();
+                    if (!mods[m]) mods[m] = { c: 0, m: 0 };
+                    mods[m].c += 1;
+                    mods[m].m += parseMoney(r['PRECIO SERVIC.']);
+                });
+                const top5 = Object.entries(mods).sort((a,b) => b[1].c - a[1].c).slice(0, 5);
 
-            renderMainChart();
-            renderAdminChart(facturado, cFact, enProceso, cProc, pendiente, cPend);
-            renderServiciosChart();
-            renderModelosChart();
-            renderDetalle();
-            renderMaestro();
-        }
+                charts.mods = new Chart(document.getElementById('chart-modelos'), {
+                    type: 'bar',
+                    data: {
+                        labels: top5.map(x => x[0]),
+                        datasets: [{ 
+                            label: 'Unidades', 
+                            data: top5.map(x => x[1].c), 
+                            backgroundColor: '#334155',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: { 
+                        indexAxis: 'y',
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { afterLabel: (i) => `Monto Total: $${top5[i.dataIndex][1].m.toLocaleString()}` } }
+                        },
+                        scales: {
+                            x: { ticks: { font: { size: 9 } }, grid: { display: false } },
+                            y: { ticks: { font: { size: 9, weight: 'bold' } } }
+                        }
+                    }
+                });
+            }
 
-        function renderMainChart() {
-            if (charts.main) charts.main.destroy();
-            const mNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-            const monthly = {};
-            
-            filteredData.forEach(r => {
-                const d = parseDate(r['FECHA COTIZACION'] || r['FECHA INICIO']);
-                if (!monthly[d.month]) monthly[d.month] = { cot: 0, label: mNames[d.month-1] };
-                monthly[d.month].cot += parseMoney(r['PRECIO SERVIC.']);
-            });
+            // ---------- DETALLE (ACORDEÓN POR MES) ----------
+            function renderDetalle() {
+                const container = document.getElementById('detalle-container');
+                const mNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+                const grouped = {};
+                
+                filteredData.forEach(r => {
+                    const d = parseDate(r['FECHA COTIZACION'] || r['FECHA INICIO']);
+                    if (!grouped[d.month]) grouped[d.month] = [];
+                    grouped[d.month].push(r);
+                });
 
-            const sortedMs = Object.keys(monthly).sort((a,b) => a-b);
-            charts.main = new Chart(document.getElementById('chart-main'), {
-                type: 'bar',
-                data: {
-                    labels: sortedMs.map(m => monthly[m].label),
-                    datasets: [{ label: 'Ventas $', data: sortedMs.map(m => monthly[m].cot), backgroundColor: '#0f172a' }]
-                },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-        }
-
-        function renderAdminChart(f, cf, p, cp, n, cn) {
-            if (charts.admin) charts.admin.destroy();
-            charts.admin = new Chart(document.getElementById('chart-admin'), {
-                type: 'doughnut',
-                data: {
-                    labels: [`Facturado (${cf})`, `En Proceso (${cp})`, `Pendiente (${cn})`],
-                    datasets: [{ data: [f, p, n], backgroundColor: ['#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }]
-                },
-                options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
-            });
-        }
-
-        function renderServiciosChart() {
-            if (charts.servs) charts.servs.destroy();
-            const servs = {};
-            filteredData.forEach(r => {
-                const s = (r['DETALLE'] || "OTROS").trim().toUpperCase();
-                servs[s] = (servs[s] || 0) + parseMoney(r['PRECIO SERVIC.']);
-            });
-            const top5 = Object.entries(servs).sort((a,b) => b[1] - a[1]).slice(0, 5);
-            charts.servs = new Chart(document.getElementById('chart-servicios'), {
-                type: 'bar',
-                data: {
-                    labels: top5.map(x => x[0].substring(0, 15)),
-                    datasets: [{ data: top5.map(x => x[1]), backgroundColor: '#00508F' }]
-                },
-                options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-        }
-
-        function renderModelosChart() {
-            if (charts.mods) charts.mods.destroy();
-            const mods = {};
-            filteredData.forEach(r => {
-                const m = (r['MODELO'] || "OTROS").trim().toUpperCase();
-                mods[m] = (mods[m] || 0) + 1;
-            });
-            const top5 = Object.entries(mods).sort((a,b) => b[1] - a[1]).slice(0, 5);
-            charts.mods = new Chart(document.getElementById('chart-modelos'), {
-                type: 'bar',
-                data: {
-                    labels: top5.map(x => x[0]),
-                    datasets: [{ data: top5.map(x => x[1]), backgroundColor: '#334155' }]
-                },
-                options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-        }
-
-        function renderDetalle() {
-            const container = document.getElementById('detalle-container');
-            const mNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-            const grouped = {};
-            filteredData.forEach(r => {
-                const d = parseDate(r['FECHA COTIZACION'] || r['FECHA INICIO']);
-                if (!grouped[d.month]) grouped[d.month] = [];
-                grouped[d.month].push(r);
-            });
-
-            container.innerHTML = Object.keys(grouped).sort((a,b) => b-a).map(m => `
-                <div class="card overflow-hidden">
-                    <div class="p-4 bg-slate-800 text-white flex justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                        <span class="font-bold text-xs uppercase">${mNames[m-1]}</span>
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-[10px]">
-                            <thead class="bg-slate-50 border-b">
-                                <tr><th class="p-3 text-left">COTI</th><th class="p-3 text-left">MODELO</th><th class="p-3 text-left">ESTADO</th><th class="p-3 text-right">MONTO</th></tr>
-                            </thead>
-                            <tbody>
-                                ${grouped[m].map(r => `
-                                    <tr class="border-b">
-                                        <td class="p-3 font-bold">${r['# COTI']}</td>
-                                        <td class="p-3">${r['MODELO']}</td>
-                                        <td class="p-3"><span class="status-pill ${r['ESTADO TÉCNICO'].includes('Terminado')?'bg-terminado':'bg-proceso'}">${r['ESTADO TÉCNICO']}</span></td>
-                                        <td class="p-3 text-right font-bold">${r['PRECIO SERVIC.']}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderMaestro() {
-            const body = document.getElementById('table-maestro-body');
-            const map = {};
-            filteredData.forEach(r => {
-                const m = (r['MODELO'] || "OTROS").trim().toUpperCase();
-                if (!map[m]) map[m] = [];
-                map[m].push(r['SERIE'] || "S/S");
-            });
-            const sorted = Object.entries(map).sort((a,b) => sortDesc ? b[1].length - a[1].length : a[1].length - b[1].length);
-            body.innerHTML = sorted.map(([mod, series], idx) => `
-                <tr class="master-row" onclick="toggleSeries(${idx})">
-                    <td class="px-6 py-4 font-bold text-slate-400">VOLVO</td>
-                    <td class="px-6 py-4 font-bold text-blue-900">${mod}</td>
-                    <td class="px-6 py-4 text-center font-black text-blue-600">${series.length}</td>
-                    <td class="px-6 py-4 text-right"><button class="text-[10px] bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold">DETALLE ▼</button></td>
-                </tr>
-                <tr id="series-${idx}" class="series-list">
-                    <td colspan="4" class="px-10 py-4 bg-slate-50">
-                        <div class="grid grid-cols-4 gap-2">
-                            ${[...new Set(series)].map(s => `<span class="bg-white px-2 py-1 rounded border text-[9px] text-center font-mono">${s}</span>`).join('')}
+                container.innerHTML = Object.keys(grouped).sort((a,b) => b-a).map(m => {
+                    const rows = grouped[m];
+                    const totalM = rows.reduce((acc, x) => acc + parseMoney(x['PRECIO SERVIC.']), 0);
+                    return `
+                        <div class="card overflow-hidden">
+                            <div class="p-3 md:p-4 bg-slate-800 text-white flex justify-between items-center cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                                <span class="font-bold text-xs uppercase">${mNames[m-1]} (${rows.length})</span>
+                                <div class="flex items-center space-x-2 md:space-x-4">
+                                    <span class="text-[9px] md:text-[10px] bg-white/20 px-2 py-1 rounded">Total: $${totalM.toLocaleString('en-US', {minimumFractionDigits:2})}</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto border-t">
+                                <table class="w-full text-[9px] md:text-[10px] min-w-[600px]">
+                                    <thead class="bg-slate-50 border-b text-slate-500 uppercase font-bold">
+                                        <tr>
+                                            <th class="p-2 md:p-3 text-left">COTI</th>
+                                            <th class="p-2 md:p-3 text-left">MODELO</th>
+                                            <th class="p-2 md:p-3 text-left">SERIE</th>
+                                            <th class="p-2 md:p-3 text-left">SERVICIO</th>
+                                            <th class="p-2 md:p-3 text-left">ESTADO</th>
+                                            <th class="p-2 md:p-3 text-left">OC VOLVO</th>
+                                            <th class="p-2 md:p-3 text-right">MONTO</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${rows.map(r => {
+                                            const oc = r['FECHA OC'] || "";
+                                            const isOC = /\d/.test(oc);
+                                            return `
+                                                <tr class="border-b hover:bg-slate-50">
+                                                    <td class="p-2 md:p-3 font-bold text-blue-900">${r['# COTI']}</td>
+                                                    <td class="p-2 md:p-3 font-bold">${r['MODELO']}</td>
+                                                    <td class="p-2 md:p-3 text-slate-500">${r['SERIE']}</td>
+                                                    <td class="p-2 md:p-3 text-slate-700 truncate max-w-[120px]" title="${r['DETALLE']}">${r['DETALLE']}</td>
+                                                    <td class="p-2 md:p-3"><span class="status-pill ${r['ESTADO TÉCNICO'].includes('Terminado')?'bg-terminado':'bg-proceso'}">${r['ESTADO TÉCNICO']}</span></td>
+                                                    <td class="p-2 md:p-3"><span class="${isOC?'date-active':''}">${oc}</span></td>
+                                                    <td class="p-2 md:p-3 text-right font-bold text-slate-800">${r['PRECIO SERVIC.']}</td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </td>
-                </tr>
-            `).join('');
-        }
+                    `;
+                }).join('');
+            }
 
-        function toggleSortMaestro() { sortDesc = !sortDesc; renderMaestro(); }
-        function toggleSeries(idx) { document.getElementById(`series-${idx}`).classList.toggle('active'); }
+            // ---------- MAESTRO DE MÁQUINAS ----------
+            function renderMaestro() {
+                const body = document.getElementById('table-maestro-body');
+                const map = {};
+                filteredData.forEach(r => {
+                    const m = (r['MODELO'] || "OTROS").trim().toUpperCase();
+                    if (!map[m]) map[m] = [];
+                    map[m].push(r['SERIE'] || "S/S");
+                });
 
-        function showPage(id) {
-            ['resumen', 'detalle', 'maestro'].forEach(p => document.getElementById('page-' + p).classList.add('hidden'));
-            document.getElementById('page-' + id).classList.remove('hidden');
-            document.querySelectorAll('.sidebar-item, .mobile-nav-item').forEach(btn => {
-                if(btn.getAttribute('data-target') === id) btn.classList.add('active', 'text-blue-600');
-                else btn.classList.remove('active', 'text-blue-600');
-            });
-        }
+                const sorted = Object.entries(map).sort((a,b) => sortDesc ? b[1].length - a[1].length : a[1].length - b[1].length);
 
-        window.onload = init;
+                body.innerHTML = sorted.map(([mod, series], idx) => `
+                    <tr class="master-row" onclick="toggleSeries(${idx})">
+                        <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-slate-400">VOLVO</td>
+                        <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-blue-900">${mod}</td>
+                        <td class="px-4 md:px-6 py-3 md:py-4 text-center font-black text-blue-600">${series.length}</td>
+                        <td class="px-4 md:px-6 py-3 md:py-4 text-right">
+                            <button class="text-[9px] md:text-[10px] bg-blue-50 text-blue-600 px-2 md:px-3 py-1 rounded-full font-bold hover:bg-blue-600 hover:text-white transition">DETALLE ▼</button>
+                        </td>
+                    </tr>
+                    <tr id="series-${idx}" class="series-list">
+                        <td colspan="4" class="px-4 md:px-10 py-3 md:py-4 bg-slate-50">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                                ${[...new Set(series)].map(s => `<span class="bg-white px-2 py-1 rounded border border-slate-200 text-[8px] md:text-[9px] text-center font-mono">S: ${s}</span>`).join('')}
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            window.toggleSortMaestro = function() {
+                sortDesc = !sortDesc;
+                document.getElementById('sort-icon').innerText = sortDesc ? '▼' : '▲';
+                renderMaestro();
+            }
+
+            window.toggleSeries = function(idx) {
+                document.getElementById(`series-${idx}`).classList.toggle('active');
+            }
+
+            // ---------- NAVEGACIÓN (MÓVIL + DESKTOP) ----------
+            window.showPage = function(id) {
+                ['resumen', 'detalle', 'maestro'].forEach(p => document.getElementById('page-' + p).classList.add('hidden'));
+                document.getElementById('page-' + id).classList.remove('hidden');
+
+                document.querySelectorAll('.sidebar-item').forEach(btn => {
+                    if(btn.getAttribute('data-target') === id) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                document.querySelectorAll('.mobile-nav-item').forEach(btn => {
+                    if(btn.getAttribute('data-target') === id) {
+                        btn.classList.remove('text-slate-400');
+                        btn.classList.add('text-blue-600');
+                    } else {
+                        btn.classList.add('text-slate-400');
+                        btn.classList.remove('text-blue-600');
+                    }
+                });
+            }
+
+            // Exponer funciones globales necesarias
+            window.processData = processData;
+            window.toggleMonthsDropdown = toggleMonthsDropdown;
+            window.init = init;
+
+            // Iniciar carga
+            window.onload = init;
+        })();
     </script>
 </body>
 </html>
