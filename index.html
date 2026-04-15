@@ -195,13 +195,14 @@
         };
 
         const parseDate = (str) => {
-            if (!str) return null;
+            if (!str || str.trim() === "") return null;
             let d, m, y;
             if (str.includes('-')) {
                 const p = str.split('-'); d = parseInt(p[2]); m = parseInt(p[1]); y = parseInt(p[0]);
             } else if (str.includes('/')) {
                 const p = str.split('/'); d = parseInt(p[0]); m = parseInt(p[1]); y = parseInt(p[2]);
             }
+            if(!y || isNaN(y)) return null;
             return { day: d, month: m, year: y, obj: new Date(y, m - 1, d) };
         };
 
@@ -236,12 +237,13 @@
             if (ySel.options.length > 0) return;
 
             const years = [...new Set(rawData.map(r => {
+                // Modificado para captar el año de cualquiera de las fechas disponibles
                 const d = parseDate(r['FECHA COTIZACION'] || r['FECHA INICIO']);
                 return d ? d.year : null;
             }))].filter(y => y && y >= 2024).sort((a,b) => b-a);
 
             years.forEach(y => ySel.add(new Option(y, y)));
-            ySel.value = "2026";
+            if(years.includes(2026)) ySel.value = "2026";
 
             const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
             mDiv.innerHTML = `<label class="flex items-center space-x-2 p-2 font-bold border-b mb-2"><input type="checkbox" id="all-m" checked onchange="toggleAllMonths(this)"> <span class="text-sm">Seleccionar Todos</span></label>`;
@@ -255,20 +257,33 @@
             processData();
         }
 
+        // --- SECCIÓN ACTUALIZADA DE FILTRADO ---
         function processData() {
             const selY = parseInt(document.getElementById('filter-year').value);
             const selMs = Array.from(document.querySelectorAll('.m-check:checked')).map(c => parseInt(c.value));
 
             filteredData = rawData.filter(r => {
-                const d = parseDate(r['FECHA COTIZACION'] || r['FECHA INICIO']);
+                // 1. REGLA: Debe tener FECHA COTIZACION o FECHA INICIO (que no estén vacías)
+                const fechaCoti = r['FECHA COTIZACION'] ? r['FECHA COTIZACION'].trim() : "";
+                const fechaInicio = r['FECHA INICIO'] ? r['FECHA INICIO'].trim() : "";
+                
+                if (fechaCoti === "" && fechaInicio === "") return false;
+
+                // Extraer fecha para comparar con los filtros del Dashboard
+                const d = parseDate(fechaCoti !== "" ? fechaCoti : fechaInicio);
                 if (!d || d.year !== selY || !selMs.includes(d.month)) return false;
-                const tec = (r['ESTADO TÉCNICO'] || "").toUpperCase();
+
+                // 2. REGLA: Su estado NO debe ser ANULADO o EVALUACION
+                // Usamos normalize para eliminar tildes (ej. EVALUACIÓN -> EVALUACION) por seguridad
+                const tec = (r['ESTADO TÉCNICO'] || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
                 if (tec.includes("ANULADO") || tec.includes("EVALUACION")) return false;
+
                 return true;
             });
 
             updateDashboard();
         }
+        // --- FIN SECCIÓN ACTUALIZADA ---
 
         function updateDashboard() {
             let totalCot = 0, ocProc = 0, ocEnProc = 0, ocPend = 0;
@@ -507,7 +522,7 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
                             </div>
                         </div>
-                        <div class="overflow-x-auto border-t">
+                        <div class="overflow-x-auto border-t hidden">
                             <table class="w-full text-[9px] md:text-[10px] min-w-[600px]">
                                 <thead class="bg-slate-50 border-b text-slate-500 uppercase font-bold">
                                     <tr>
@@ -584,24 +599,15 @@
             document.getElementById(`series-${idx}`).classList.toggle('active');
         }
 
-        // Nueva función de navegación unificada para Móvil y Desktop
         function showPage(id) {
-            // 1. Ocultar todas las páginas
             ['resumen', 'detalle', 'maestro'].forEach(p => document.getElementById('page-' + p).classList.add('hidden'));
-            
-            // 2. Mostrar la solicitada
             document.getElementById('page-' + id).classList.remove('hidden');
 
-            // 3. Sincronizar botones del Sidebar (Desktop)
             document.querySelectorAll('.sidebar-item').forEach(btn => {
-                if(btn.getAttribute('data-target') === id) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
+                if(btn.getAttribute('data-target') === id) btn.classList.add('active');
+                else btn.classList.remove('active');
             });
 
-            // 4. Sincronizar botones del Tab Bar (Móvil)
             document.querySelectorAll('.mobile-nav-item').forEach(btn => {
                 if(btn.getAttribute('data-target') === id) {
                     btn.classList.remove('text-slate-400');
