@@ -41,7 +41,6 @@
 </head>
 <body class="flex h-screen overflow-hidden relative">
 
-    <!-- SIDEBAR (Desktop) - sin cambios -->
     <aside class="sidebar text-white hidden md:flex flex-col p-6 shrink-0 h-full">
         <div class="flex items-center space-x-3 mb-10">
             <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl font-mono">E</div>
@@ -91,7 +90,6 @@
         <div id="content-scroll" class="p-4 md:p-8 pb-24 md:pb-8 overflow-y-auto flex-1 space-y-6 md:space-y-8">
             <!-- Páginas sin cambios estructurales -->
             <div id="page-resumen" class="space-y-6">
-                <!-- KPIs -->
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
                     <div class="card p-4 md:p-5 border-l-4 border-blue-600 col-span-2 md:col-span-1">
                         <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nro Cotizaciones</span>
@@ -115,7 +113,6 @@
                     </div>
                 </div>
 
-                <!-- Gráficos (sin cambios) -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="card p-4 md:p-6">
                         <div class="mb-4 md:mb-6 flex justify-between items-start">
@@ -169,7 +166,6 @@
             </div>
         </div>
 
-        <!-- Barra móvil sin cambios -->
         <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white border-t flex justify-around items-center h-16 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
             <div onclick="showPage('resumen')" data-target="resumen" class="mobile-nav-item text-blue-600 flex flex-col items-center justify-center w-full h-full cursor-pointer">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
@@ -193,18 +189,31 @@
         let charts = {};
         let sortDesc = true;
 
-        // ---------- FUNCIÓN ROBUSTA PARA OBTENER COLUMNAS ----------
+        // ---------- ACCESO ROBUSTO A COLUMNAS (ahora elimina comillas dobles) ----------
         function getCol(row, colName) {
-            // Normaliza el nombre buscado: elimina tildes, espacios extra y pasa a mayúsculas
+            if (!row) return undefined;
+            // Normalizar el nombre buscado: eliminar comillas, tildes, espacios extras, pasar a mayúsculas
             const normalizedSearch = colName.trim().toUpperCase()
+                .replace(/"/g, '')  // <-- ELIMINAR COMILLAS DOBLES
                 .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             
             const key = Object.keys(row).find(k => {
                 const normalizedKey = k.trim().toUpperCase()
+                    .replace(/"/g, '')
                     .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                return normalizedKey === normalizedSearch;
+                return normalizedKey === normalizedSearch || normalizedKey.includes(normalizedSearch);
             });
             return key ? row[key] : undefined;
+        }
+
+        // ---------- OBTENER FECHA EFECTIVA SEGÚN REGLA ----------
+        function getEffectiveDate(row) {
+            const fechaCot = getCol(row, 'FECHA COTIZACION');
+            const fechaIni = getCol(row, 'FECHA INICIO');
+            if (fechaCot && fechaCot.toString().trim() !== "") {
+                return fechaCot;
+            }
+            return fechaIni || "";
         }
 
         // ---------- PARSEO DE MONEDA ----------
@@ -226,7 +235,7 @@
             return parseFloat(str) || 0;
         };
 
-        // ---------- PARSEO DE FECHA (dd/mm/yyyy o yyyy-mm-dd) ----------
+        // ---------- PARSEO DE FECHA ----------
         const parseDate = (str) => {
             if (!str) return null;
             const clean = str.toString().trim();
@@ -263,8 +272,7 @@
                     header: true, skipEmptyLines: true,
                     complete: (results) => {
                         rawData = results.data;
-                        // Mostrar encabezados reales para depuración
-                        console.log("Encabezados del CSV:", Object.keys(rawData[0] || {}));
+                        console.log("🔍 Encabezados reales del CSV:", Object.keys(rawData[0] || {}));
                         setupFilters();
                         processData();
                     }
@@ -278,7 +286,7 @@
             if (ySel.options.length > 0) return;
 
             const years = [...new Set(rawData.map(r => {
-                const d = parseDate(getCol(r, 'FECHA COTIZACION') || getCol(r, 'FECHA INICIO'));
+                const d = parseDate(getEffectiveDate(r));
                 return d ? d.year : null;
             }))].filter(y => y && y >= 2024).sort((a,b) => b-a);
 
@@ -303,36 +311,33 @@
             const selMs = Array.from(document.querySelectorAll('.m-check:checked')).map(c => parseInt(c.value));
 
             filteredData = rawData.filter(r => {
-                // Obtener fechas con prioridad: FECHA COTIZACION, luego FECHA INICIO
-                const fechaCot = getCol(r, 'FECHA COTIZACION');
-                const fechaIni = getCol(r, 'FECHA INICIO');
-                
-                // Si FECHA COTIZACION existe y no está vacía, se usa; de lo contrario se usa FECHA INICIO
-                let fechaStr = (fechaCot && fechaCot.toString().trim() !== "") ? fechaCot : fechaIni;
+                const fechaStr = getEffectiveDate(r);
                 const d = parseDate(fechaStr);
                 
-                // DEPURACIÓN: descomentar para ver qué fecha se asigna a cada registro
-                // console.log(`#COTI: ${getCol(r, '# COTI')} | F.COT: ${fechaCot} | F.INI: ${fechaIni} | USADA: ${fechaStr} | AÑO/MES: ${d?.year}-${d?.month}`);
+                // DEBUG para las cotizaciones problemáticas
+                const coti = getCol(r, '# COTI');
+                if (coti === '6177' || coti === '6184' || coti === '6185' || coti === '6187') {
+                    console.log(`🐞 DEBUG ${coti} | F.COT: "${getCol(r, 'FECHA COTIZACION')}" | F.INI: "${getCol(r, 'FECHA INICIO')}" | EFECTIVA: "${fechaStr}" | AÑO/MES: ${d?.year}-${d?.month}`);
+                }
                 
                 if (!d || d.year !== selY || !selMs.includes(d.month)) return false;
 
-                // EXCLUSIÓN: FECHA OC contiene "ANULADO" o "EVALUACION"
                 const fechaOC = (getCol(r, 'FECHA OC') || "").toString().toUpperCase();
                 if (fechaOC.includes("ANULADO") || fechaOC.includes("EVALUACION")) return false;
 
                 return true;
             });
 
-            // Exponer para depuración en consola
             window.filteredData = filteredData;
             window.parseMoney = parseMoney;
             window.parseDate = parseDate;
             window.getCol = getCol;
+            window.getEffectiveDate = getEffectiveDate;
 
             updateDashboard();
         }
 
-        // ---------- RESTO DE FUNCIONES (sin cambios) ----------
+        // ---------- RESTO DE FUNCIONES (sin cambios visuales) ----------
         function updateDashboard() {
             let totalCot = 0, ocProc = 0, ocEnProc = 0, ocPend = 0;
             let countProc = 0, countEnProc = 0, countPend = 0;
@@ -368,11 +373,7 @@
             const monthly = {};
             
             filteredData.forEach(r => {
-                const fechaCot = getCol(r, 'FECHA COTIZACION');
-                const fechaIni = getCol(r, 'FECHA INICIO');
-                let fechaStr = (fechaCot && fechaCot.toString().trim() !== "") ? fechaCot : fechaIni;
-                const d = parseDate(fechaStr);
-                
+                const d = parseDate(getEffectiveDate(r));
                 if (!monthly[d.month]) monthly[d.month] = { cot: 0, proc: 0, lastDay: 0, label: mNames[d.month-1] };
                 const mVal = parseMoney(getCol(r, 'PRECIO SERVIC.'));
                 monthly[d.month].cot += mVal;
@@ -557,10 +558,7 @@
             const grouped = {};
             
             filteredData.forEach(r => {
-                const fechaCot = getCol(r, 'FECHA COTIZACION');
-                const fechaIni = getCol(r, 'FECHA INICIO');
-                let fechaStr = (fechaCot && fechaCot.toString().trim() !== "") ? fechaCot : fechaIni;
-                const d = parseDate(fechaStr);
+                const d = parseDate(getEffectiveDate(r));
                 if (!grouped[d.month]) grouped[d.month] = [];
                 grouped[d.month].push(r);
             });
